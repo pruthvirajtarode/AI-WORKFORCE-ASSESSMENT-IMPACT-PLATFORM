@@ -11,15 +11,20 @@ export default defineConfig({
     },
   },
   build: {
-    sourcemap: true,
+    sourcemap: false,
     chunkSizeWarningLimit: 1500,
     rollupOptions: {
       output: {
-        manualChunks: {
-          vendor: ['react', 'react-dom', 'react-router-dom'],
-          charts: ['recharts'],
-          supabase: ['@supabase/supabase-js'],
-          ui: ['lucide-react'],
+        manualChunks(id) {
+          if (id.includes('node_modules')) {
+            if (id.includes('@supabase')) return 'supabase';
+            if (id.includes('lucide-react')) return 'ui';
+            if (
+              id.includes('react-dom') ||
+              id.includes('react-router') ||
+              id.includes('react/')
+            ) return 'vendor';
+          }
         },
       },
     },
