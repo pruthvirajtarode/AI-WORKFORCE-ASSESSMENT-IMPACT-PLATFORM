@@ -1,25 +1,25 @@
 import { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { Search, Filter, Download, ChevronRight, Users } from 'lucide-react';
+import { Search, Download, ChevronRight, Users, CheckCircle, Clock } from 'lucide-react';
 import { ROUTES, DEPARTMENTS, DEPARTMENT_MAP } from '@/lib/constants';
 import { useAdminData } from '@/hooks/useAdminData';
 import { formatPercent, getAIReadinessLevel, AI_READINESS_CONFIG } from '@/lib/utils';
 import AdminLayout from '@/components/layout/AdminLayout';
 import ProgressBar from '@/components/ui/ProgressBar';
 
-const PHASE_OPTIONS = [
+const STATUS_OPTIONS = [
   { value: 'all', label: 'All Employees' },
-  { value: 'both', label: 'Completed Both' },
-  { value: 'pre_only', label: 'Pre Only' },
-  { value: 'none', label: 'Not Started' },
+  { value: 'submitted', label: 'Submitted' },
+  { value: 'evaluated', label: 'Evaluated' },
+  { value: 'pending', label: 'Not Submitted' },
 ];
 
 export default function AdminEmployeesPage() {
   const { employees } = useAdminData();
   const [search, setSearch] = useState('');
   const [deptFilter, setDeptFilter] = useState('all');
-  const [phaseFilter, setPhaseFilter] = useState('all');
-  const [sortBy, setSortBy] = useState<'name' | 'postScore' | 'improvement'>('name');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [sortBy, setSortBy] = useState<'name' | 'postScore' | 'department'>('name');
 
   const filtered = useMemo(() => {
     let list = [...employees];
@@ -35,23 +35,39 @@ export default function AdminEmployeesPage() {
 
     if (deptFilter !== 'all') list = list.filter((e) => e.departmentId === deptFilter);
 
-    if (phaseFilter === 'both') list = list.filter((e) => e.preScore !== null && e.postScore !== null);
-    else if (phaseFilter === 'pre_only') list = list.filter((e) => e.preScore !== null && e.postScore === null);
-    else if (phaseFilter === 'none') list = list.filter((e) => e.preScore === null);
+    if (statusFilter === 'submitted') list = list.filter((e) => e.postScore !== null);
+    else if (statusFilter === 'evaluated') list = list.filter((e) => e.trainerMarks !== null);
+    else if (statusFilter === 'pending') list = list.filter((e) => e.postScore === null);
 
     list.sort((a, b) => {
       if (sortBy === 'name') return a.name.localeCompare(b.name);
-      if (sortBy === 'postScore') return (b.postScore ?? -1) - (a.postScore ?? -1);
-      if (sortBy === 'improvement') {
-        const ai = (a.preScore && a.postScore) ? a.postScore - a.preScore : -999;
-        const bi = (b.preScore && b.postScore) ? b.postScore - b.preScore : -999;
-        return bi - ai;
-      }
+      if (sortBy === 'postScore') return (b.finalScore ?? -1) - (a.finalScore ?? -1);
+      if (sortBy === 'department') return a.departmentId.localeCompare(b.departmentId);
       return 0;
     });
 
     return list;
-  }, [employees, search, deptFilter, phaseFilter, sortBy]);
+  }, [employees, search, deptFilter, statusFilter, sortBy]);
+
+  const handleExport = () => {
+    const headers = ['Employee ID', 'Name', 'Email', 'Department', 'Role', 'Score (%)', 'Trainer Marks (%)', 'Final Score (%)'];
+    const rows = filtered.map((e) => {
+      const dept = DEPARTMENT_MAP[e.departmentId as keyof typeof DEPARTMENT_MAP];
+      return [
+        e.employeeId, e.name, e.email,
+        dept?.name ?? e.departmentId, e.role,
+        e.postScore?.toFixed(1) ?? '',
+        e.trainerMarks?.toFixed(1) ?? '',
+        e.finalScore?.toFixed(1) ?? '',
+      ];
+    });
+    const csv = [headers, ...rows].map((r) => r.join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'suroj-ai-assessment-results.csv'; a.click();
+    URL.revokeObjectURL(url);
+  };
 
   return (
     <AdminLayout>
@@ -60,7 +76,7 @@ export default function AdminEmployeesPage() {
           <h1 className="page-title">Employees</h1>
           <p className="page-subtitle">{employees.length} enrolled · {filtered.length} shown</p>
         </div>
-        <button className="btn-secondary btn-sm gap-1.5">
+        <button onClick={handleExport} className="btn-secondary btn-sm gap-1.5">
           <Download className="w-3.5 h-3.5" /> Export CSV
         </button>
       </div>
@@ -80,13 +96,13 @@ export default function AdminEmployeesPage() {
           <option value="all">All Departments</option>
           {DEPARTMENTS.map((d) => <option key={d.id} value={d.id}>{d.code} — {d.name.split(' / ')[0]}</option>)}
         </select>
-        <select value={phaseFilter} onChange={(e) => setPhaseFilter(e.target.value)} className="select w-auto text-sm py-2">
-          {PHASE_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+        <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="select w-auto text-sm py-2">
+          {STATUS_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
         </select>
         <select value={sortBy} onChange={(e) => setSortBy(e.target.value as any)} className="select w-auto text-sm py-2">
           <option value="name">Sort: Name</option>
-          <option value="postScore">Sort: Post Score</option>
-          <option value="improvement">Sort: Improvement</option>
+          <option value="postScore">Sort: Score</option>
+          <option value="department">Sort: Department</option>
         </select>
       </div>
 
@@ -99,9 +115,10 @@ export default function AdminEmployeesPage() {
                 <th>Employee</th>
                 <th>Department</th>
                 <th>Role</th>
-                <th>Pre Score</th>
+                <th>Status</th>
                 <th>Post Score</th>
-                <th>Improvement</th>
+                <th>Trainer Marks</th>
+                <th>Final Score</th>
                 <th>Readiness</th>
                 <th />
               </tr>
@@ -109,15 +126,14 @@ export default function AdminEmployeesPage() {
             <tbody>
               {filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="text-center py-12 text-brand-muted">
+                  <td colSpan={9} className="text-center py-12 text-brand-muted">
                     <Users className="w-8 h-8 mx-auto mb-2 opacity-30" />
                     No employees match your filters
                   </td>
                 </tr>
               ) : filtered.map((emp) => {
-                const improvement = (emp.preScore && emp.postScore) ? emp.postScore - emp.preScore : null;
-                const displayScore = emp.postScore ?? emp.preScore;
-                const level = displayScore ? getAIReadinessLevel(displayScore) : null;
+                const displayScore = emp.finalScore;
+                const level = displayScore !== null ? getAIReadinessLevel(displayScore) : null;
                 const levelConfig = level ? AI_READINESS_CONFIG[level] : null;
                 const dept = DEPARTMENT_MAP[emp.departmentId as keyof typeof DEPARTMENT_MAP];
 
@@ -141,13 +157,16 @@ export default function AdminEmployeesPage() {
                     </td>
                     <td className="text-brand-muted text-xs">{emp.role}</td>
                     <td>
-                      {emp.preScore !== null ? (
-                        <div className="min-w-[80px]">
-                          <div className="text-sm font-semibold text-brand-navy mb-1">{formatPercent(emp.preScore, 0)}</div>
-                          <ProgressBar value={emp.preScore} height="sm" colorByScore />
-                        </div>
+                      {emp.trainerMarks !== null ? (
+                        <span className="badge badge-success flex items-center gap-1 w-fit">
+                          <CheckCircle className="w-3 h-3" /> Evaluated
+                        </span>
+                      ) : emp.postScore !== null ? (
+                        <span className="badge badge-blue flex items-center gap-1 w-fit">
+                          <Clock className="w-3 h-3" /> Submitted
+                        </span>
                       ) : (
-                        <span className="text-xs text-brand-muted italic">Not taken</span>
+                        <span className="badge-gray text-xs">Pending</span>
                       )}
                     </td>
                     <td>
@@ -157,15 +176,25 @@ export default function AdminEmployeesPage() {
                           <ProgressBar value={emp.postScore} height="sm" colorByScore />
                         </div>
                       ) : (
-                        <span className="text-xs text-brand-muted italic">Pending</span>
+                        <span className="text-xs text-brand-muted italic">—</span>
                       )}
                     </td>
                     <td>
-                      {improvement !== null ? (
-                        <span className={`text-sm font-bold ${improvement > 0 ? 'text-success-600' : 'text-danger-600'}`}>
-                          {improvement > 0 ? '+' : ''}{improvement.toFixed(1)}%
-                        </span>
-                      ) : <span className="text-xs text-brand-muted">—</span>}
+                      {emp.trainerMarks !== null ? (
+                        <span className="text-sm font-semibold text-brand-navy">{formatPercent(emp.trainerMarks, 0)}</span>
+                      ) : (
+                        <span className="text-xs text-brand-muted">—</span>
+                      )}
+                    </td>
+                    <td>
+                      {displayScore !== null ? (
+                        <div className="min-w-[80px]">
+                          <div className="text-sm font-bold text-success-600 mb-1">{formatPercent(displayScore, 0)}</div>
+                          <ProgressBar value={displayScore} height="sm" colorByScore />
+                        </div>
+                      ) : (
+                        <span className="text-xs text-brand-muted">—</span>
+                      )}
                     </td>
                     <td>
                       {levelConfig ? (

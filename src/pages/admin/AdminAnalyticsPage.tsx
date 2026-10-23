@@ -2,7 +2,7 @@ import { useAdminData } from '@/hooks/useAdminData';
 import { formatPercent, AI_READINESS_CONFIG, COMPETENCY_LABELS } from '@/lib/utils';
 import AdminLayout from '@/components/layout/AdminLayout';
 import ProgressBar from '@/components/ui/ProgressBar';
-import { TrendingUp, Users, Award, BarChart3, Target } from 'lucide-react';
+import { Users, Award, BarChart3, Target, Trophy } from 'lucide-react';
 
 function SectionTitle({ icon: Icon, title }: { icon: React.ElementType; title: string }) {
   return (
@@ -15,28 +15,27 @@ function SectionTitle({ icon: Icon, title }: { icon: React.ElementType; title: s
 
 export default function AdminAnalyticsPage() {
   const {
-    totalEmployees, preCompleted, postCompleted,
-    overallPreAvg, overallPostAvg, overallImprovement,
-    deptStats, competencyStats, readinessDistribution,
+    totalEmployees, submitted, evaluated,
+    overallAvg, deptStats, competencyStats, readinessDistribution,
   } = useAdminData();
 
   const readinessTotals = Object.values(readinessDistribution).reduce((s, v) => s + v, 0);
+  const completionPct = (submitted / totalEmployees) * 100;
 
   return (
     <AdminLayout>
       <div className="page-header">
         <h1 className="page-title">Analytics & Insights</h1>
-        <p className="page-subtitle">Training impact analysis across all departments and competencies</p>
+        <p className="page-subtitle">Post-training assessment analysis across all departments and competencies</p>
       </div>
 
       {/* Top KPI Strip */}
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         {[
           { label: 'Total Enrolled', value: totalEmployees, sub: 'Employees' },
-          { label: 'Pre Complete', value: preCompleted, sub: `${formatPercent((preCompleted / totalEmployees) * 100, 0)}` },
-          { label: 'Post Complete', value: postCompleted, sub: `${formatPercent((postCompleted / totalEmployees) * 100, 0)}` },
-          { label: 'Avg Pre Score', value: formatPercent(overallPreAvg, 1), sub: 'Baseline' },
-          { label: 'Avg Post Score', value: formatPercent(overallPostAvg, 1), sub: '+' + overallImprovement.toFixed(1) + '% gain' },
+          { label: 'Submitted', value: submitted, sub: `${formatPercent(completionPct, 0)} completion` },
+          { label: 'Evaluated', value: evaluated, sub: 'Trainer-marked' },
+          { label: 'Avg Post Score', value: formatPercent(overallAvg, 1), sub: 'Organisation-wide' },
         ].map(({ label, value, sub }) => (
           <div key={label} className="card p-5">
             <div className="kpi-label mb-1">{label}</div>
@@ -46,37 +45,28 @@ export default function AdminAnalyticsPage() {
         ))}
       </div>
 
-      {/* Department Comparison */}
+      {/* Department Scores */}
       <div className="card p-6 mb-6">
-        <SectionTitle icon={BarChart3} title="Department-Level Impact" />
-        <div className="space-y-6">
+        <SectionTitle icon={BarChart3} title="Department-Level Post-Training Scores" />
+        <div className="space-y-5">
           {deptStats.map((dept) => (
             <div key={dept.deptId} className="border-b border-brand-border/50 last:border-0 pb-5 last:pb-0">
               <div className="flex items-start justify-between mb-3 gap-4">
                 <div className="flex-1 min-w-0">
                   <div className="font-semibold text-brand-navy text-sm">{dept.name.split(' / ')[0]}</div>
-                  <div className="text-xs text-brand-muted">{dept.count} employees · {formatPercent(dept.completionRate, 0)} post-completion</div>
+                  <div className="text-xs text-brand-muted">{dept.count} employees · {dept.submitted} submitted · {formatPercent(dept.completionRate, 0)} completion</div>
                 </div>
                 <div className="text-right shrink-0">
-                  <div className="text-lg font-bold text-success-600">+{dept.improvement.toFixed(1)}%</div>
-                  <div className="text-xs text-brand-muted">improvement</div>
+                  <div className="text-lg font-bold text-brand-navy">{formatPercent(dept.avgScore, 1)}</div>
+                  <div className="text-xs text-brand-muted">avg score</div>
                 </div>
               </div>
-              <div className="grid sm:grid-cols-2 gap-3">
-                <div>
-                  <div className="flex justify-between text-xs text-brand-muted mb-1.5">
-                    <span>Pre-Training</span>
-                    <span className="font-medium">{formatPercent(dept.preAvg, 1)}</span>
-                  </div>
-                  <ProgressBar value={dept.preAvg} height="md" color="bg-brand-muted/30" />
+              <div>
+                <div className="flex justify-between text-xs text-brand-muted mb-1.5">
+                  <span>Post-Training Score</span>
+                  <span className="font-medium">{formatPercent(dept.avgScore, 1)}</span>
                 </div>
-                <div>
-                  <div className="flex justify-between text-xs mb-1.5">
-                    <span className="text-brand-muted">Post-Training</span>
-                    <span className="font-semibold text-success-600">{formatPercent(dept.postAvg, 1)}</span>
-                  </div>
-                  <ProgressBar value={dept.postAvg} colorByScore height="md" />
-                </div>
+                <ProgressBar value={dept.avgScore} colorByScore height="md" />
               </div>
             </div>
           ))}
@@ -122,10 +112,10 @@ export default function AdminAnalyticsPage() {
 
         {/* Competency Rankings */}
         <div className="card p-6">
-          <SectionTitle icon={Target} title="Competency Improvement Ranking" />
+          <SectionTitle icon={Target} title="Competency Score Ranking" />
           <div className="space-y-3">
             {[...competencyStats]
-              .sort((a, b) => b.improvement - a.improvement)
+              .sort((a, b) => b.avgScore - a.avgScore)
               .map((comp, i) => (
                 <div key={comp.key} className="flex items-center gap-3">
                   <span className={`w-6 h-6 rounded-md flex items-center justify-center text-xs font-bold shrink-0 ${
@@ -142,8 +132,7 @@ export default function AdminAnalyticsPage() {
                     </div>
                   </div>
                   <div className="text-right shrink-0">
-                    <div className="text-sm font-bold text-success-600">+{comp.improvement.toFixed(1)}%</div>
-                    <div className="text-xs text-brand-muted">{formatPercent(comp.postAvg, 0)}</div>
+                    <div className="text-sm font-bold text-brand-navy">{formatPercent(comp.avgScore, 1)}</div>
                   </div>
                 </div>
               ))}
@@ -153,44 +142,59 @@ export default function AdminAnalyticsPage() {
 
       {/* Participation Summary */}
       <div className="card p-6">
-        <SectionTitle icon={Users} title="Participation by Department" />
+        <SectionTitle icon={Users} title="Department Summary" />
         <div className="table-wrapper">
           <table className="table">
             <thead>
               <tr>
                 <th>Department</th>
                 <th>Enrolled</th>
-                <th>Pre Completed</th>
-                <th>Post Completed</th>
-                <th>Post Completion %</th>
-                <th>Avg Pre</th>
-                <th>Avg Post</th>
-                <th>Δ Improvement</th>
+                <th>Submitted</th>
+                <th>Completion %</th>
+                <th>Avg Score</th>
+                <th>Top Readiness</th>
               </tr>
             </thead>
             <tbody>
-              {deptStats.map((dept) => (
-                <tr key={dept.deptId}>
-                  <td>
-                    <span className="badge-gray mr-2">{dept.code}</span>
-                    <span className="text-xs text-brand-muted">{dept.name.split(' / ')[0].split(' & ')[0]}</span>
-                  </td>
-                  <td className="font-semibold text-brand-navy">{dept.count}</td>
-                  <td>{dept.count}</td>
-                  <td>{Math.round(dept.count * dept.completionRate / 100)}</td>
-                  <td>
-                    <div className="flex items-center gap-2">
-                      <ProgressBar value={dept.completionRate} height="sm" colorByScore className="w-16" />
-                      <span className="text-xs text-brand-muted">{formatPercent(dept.completionRate, 0)}</span>
-                    </div>
-                  </td>
-                  <td className="text-sm text-brand-muted">{formatPercent(dept.preAvg, 1)}</td>
-                  <td className="text-sm font-medium text-brand-navy">{formatPercent(dept.postAvg, 1)}</td>
-                  <td>
-                    <span className="text-sm font-bold text-success-600">+{dept.improvement.toFixed(1)}%</span>
-                  </td>
-                </tr>
-              ))}
+              {deptStats.map((dept) => {
+                const topScore = dept.avgScore;
+                const topLevel = topScore > 0 ? AI_READINESS_CONFIG[Object.entries(AI_READINESS_CONFIG)
+                  .sort((a, b) => {
+                    const bands = { needs_development: 0, developing: 40, operational: 60, advanced: 75, ai_leader: 90 };
+                    return (bands[b[0] as keyof typeof bands] ?? 0) - (bands[a[0] as keyof typeof bands] ?? 0);
+                  })
+                  .find(([, c]) => topScore >= ({ needs_development: 0, developing: 40, operational: 60, advanced: 75, ai_leader: 90 }['' as never] ?? 0))
+                  ?.[0] as keyof typeof AI_READINESS_CONFIG ?? 'needs_development'
+                ] : null;
+                return (
+                  <tr key={dept.deptId}>
+                    <td>
+                      <span className="badge-gray mr-2">{dept.code}</span>
+                      <span className="text-xs text-brand-muted">{dept.name.split(' / ')[0].split(' & ')[0]}</span>
+                    </td>
+                    <td className="font-semibold text-brand-navy">{dept.count}</td>
+                    <td>{dept.submitted}</td>
+                    <td>
+                      <div className="flex items-center gap-2">
+                        <ProgressBar value={dept.completionRate} height="sm" colorByScore className="w-16" />
+                        <span className="text-xs text-brand-muted">{formatPercent(dept.completionRate, 0)}</span>
+                      </div>
+                    </td>
+                    <td>
+                      <div className="min-w-[80px]">
+                        <div className="text-sm font-semibold text-brand-navy mb-1">{formatPercent(dept.avgScore, 1)}</div>
+                        <ProgressBar value={dept.avgScore} colorByScore height="sm" />
+                      </div>
+                    </td>
+                    <td>
+                      <span className="flex items-center gap-1 text-xs text-brand-gold font-medium">
+                        <Trophy className="w-3 h-3" />
+                        {dept.submitted > 0 ? 'Scored' : 'Pending'}
+                      </span>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>

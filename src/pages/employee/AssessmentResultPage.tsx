@@ -1,8 +1,8 @@
 import { useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import {
-  Trophy, Clock, CheckCircle, BarChart3, ArrowRight, Home,
-  TrendingUp, Award, Star,
+  Trophy, Clock, CheckCircle, BarChart3, Home,
+  Star, Award,
 } from 'lucide-react';
 import { ROUTES } from '@/lib/constants';
 import { useLocalAssessment } from '@/hooks/useLocalAssessment';
@@ -16,10 +16,10 @@ import ProgressBar from '@/components/ui/ProgressBar';
 export default function AssessmentResultPage() {
   const { id: sessionId } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { session, results } = useLocalAssessment();
+  const { result } = useLocalAssessment();
 
-  // Find the result matching this session
-  const result = results.find((r) => r.sessionId === sessionId);
+  // Verify result belongs to this session
+  const isMatch = result?.sessionId === sessionId;
 
   useEffect(() => {
     if (!result) navigate(ROUTES.employeeDashboard);
@@ -30,44 +30,33 @@ export default function AssessmentResultPage() {
   const level = getAIReadinessLevel(result.percentage);
   const config = AI_READINESS_CONFIG[level];
   const competencies = Object.entries(result.competencyScores).sort((a, b) => b[1].percentage - a[1].percentage);
-  const isPostAssessment = result.phase === 'post';
-
-  // Score color
-  const scoreColor = result.percentage >= 75 ? 'text-success-600' :
-    result.percentage >= 60 ? 'text-brand-blue' :
-    result.percentage >= 40 ? 'text-warning-600' : 'text-danger-600';
 
   return (
     <EmployeeLayout>
       <div className="max-w-2xl mx-auto">
-        {/* Hero Score Card */}
+        {/* Hero Confirmation Card */}
         <div className="gradient-navy rounded-2xl p-8 text-center text-white mb-6">
           <div className="w-16 h-16 rounded-2xl gradient-gold flex items-center justify-center mx-auto mb-5">
             <Trophy className="w-8 h-8 text-brand-navy" />
           </div>
           <div className="inline-flex items-center gap-2 bg-white/10 rounded-full px-3 py-1 mb-4">
             <span className="text-xs font-semibold uppercase tracking-wide text-brand-gold">
-              {result.phase === 'pre' ? 'Pre-Training' : 'Post-Training'} Assessment Complete
+              Post-Training Assessment Submitted
             </span>
           </div>
-          <div className={`text-6xl font-bold mb-2 ${result.percentage >= 75 ? 'text-brand-gold' : 'text-white'}`}>
-            {formatPercent(result.percentage, 0)}
-          </div>
-          <p className="text-white/60 mb-4">
-            {result.rawScore} / {result.maxScore} marks
+          <h1 className="text-2xl font-bold text-white mb-2">
+            Assessment Complete!
+          </h1>
+          <p className="text-white/60 text-sm max-w-md mx-auto">
+            Your responses have been recorded. The assessment team will review and evaluate your answers. Results will be shared through your HR department.
           </p>
-          <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl ${config.bgColor}`}>
-            <Award className={`w-4 h-4 ${config.color}`} />
-            <span className={`text-sm font-semibold ${config.color}`}>{config.label}</span>
-          </div>
-          <p className="text-white/50 text-xs mt-3">{config.description}</p>
         </div>
 
         {/* Stats */}
         <div className="grid grid-cols-3 gap-4 mb-6">
           {[
             { icon: Clock, label: 'Time Taken', value: formatDuration(result.timeTaken) },
-            { icon: CheckCircle, label: 'Score', value: formatScore(result.rawScore, result.maxScore) },
+            { icon: CheckCircle, label: 'Answers', value: formatScore(result.rawScore, result.maxScore) },
             { icon: BarChart3, label: 'Competencies', value: `${competencies.length}` },
           ].map(({ icon: Icon, label, value }) => (
             <div key={label} className="card p-4 text-center">
@@ -77,6 +66,28 @@ export default function AssessmentResultPage() {
             </div>
           ))}
         </div>
+
+        {/* Provisional Score — shown as informational only */}
+        {isMatch && (
+          <div className="card p-6 mb-6">
+            <div className="flex items-center gap-2 mb-4">
+              <Award className="w-4 h-4 text-brand-gold" />
+              <h2 className="font-semibold text-brand-navy">Provisional Score Summary</h2>
+            </div>
+            <div className="text-center py-4">
+              <div className="text-5xl font-bold text-brand-navy mb-1">
+                {formatPercent(result.percentage, 0)}
+              </div>
+              <div className={`text-sm font-medium ${config.color} mb-1`}>{config.label}</div>
+              <div className="text-xs text-brand-muted">{config.description}</div>
+            </div>
+            <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl w-full justify-center mt-2 ${config.bgColor}`}>
+              <span className={`text-sm font-semibold ${config.color}`}>
+                {result.rawScore} / {result.maxScore} marks (objective scoring only)
+              </span>
+            </div>
+          </div>
+        )}
 
         {/* Competency Breakdown */}
         <div className="card p-6 mb-6">
@@ -101,50 +112,23 @@ export default function AssessmentResultPage() {
           </div>
         </div>
 
-        {/* Subjective Note */}
+        {/* Important Note */}
         <div className="bg-brand-gold/10 border border-brand-gold/30 rounded-xl p-4 mb-6">
           <div className="flex items-start gap-2">
             <Star className="w-4 h-4 text-brand-gold shrink-0 mt-0.5" />
             <div>
-              <p className="text-sm font-semibold text-brand-navy mb-1">Note on Subjective Scores</p>
+              <p className="text-sm font-semibold text-brand-navy mb-1">Note on Final Score</p>
               <p className="text-xs text-brand-muted">
-                Written/scenario answers are provisionally scored at 60% pending manual review by assessors. 
-                Your final score may change after evaluation. Check back in the results section for updates.
+                The score above is provisional (objective questions only). Written/scenario answers will be manually reviewed and marked by assessors. Your final score may differ. Official results will be communicated by HR.
               </p>
             </div>
           </div>
         </div>
 
-        {/* What's Next */}
-        <div className="card p-6 mb-6">
-          <div className="flex items-center gap-2 mb-4">
-            <TrendingUp className="w-4 h-4 text-brand-gold" />
-            <h2 className="font-semibold text-brand-navy">What's Next</h2>
-          </div>
-          {result.phase === 'pre' ? (
-            <div className="space-y-3 text-sm text-brand-charcoal">
-              <p>✅ Your pre-training baseline is now recorded.</p>
-              <p>📚 Participate in the Be10x 3-day AI training workshop.</p>
-              <p>🎯 After the workshop, complete the Post-Training Assessment to measure your improvement.</p>
-            </div>
-          ) : (
-            <div className="space-y-3 text-sm text-brand-charcoal">
-              <p>✅ Both assessments completed. Your impact score is calculated.</p>
-              <p>📊 View your detailed results including pre/post comparison.</p>
-              <p>🏆 Share your AI readiness level with your manager and department head.</p>
-            </div>
-          )}
-        </div>
-
-        {/* Actions */}
-        <div className="flex gap-3">
-          <Link to={ROUTES.employeeDashboard} className="btn-secondary flex-1 justify-center no-underline">
-            <Home className="w-4 h-4" /> Dashboard
-          </Link>
-          <Link to={ROUTES.employeeResults} className="btn-primary flex-1 justify-center no-underline">
-            Full Results <ArrowRight className="w-4 h-4" />
-          </Link>
-        </div>
+        {/* Action */}
+        <Link to={ROUTES.employeeDashboard} className="btn-secondary w-full justify-center no-underline">
+          <Home className="w-4 h-4" /> Back to Dashboard
+        </Link>
       </div>
     </EmployeeLayout>
   );

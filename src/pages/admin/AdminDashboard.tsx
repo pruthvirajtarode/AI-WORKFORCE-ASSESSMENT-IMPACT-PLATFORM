@@ -1,11 +1,11 @@
 import { Link } from 'react-router-dom';
 import {
-  Users, ClipboardList, TrendingUp, Award, ArrowUpRight,
-  BarChart3, Brain, CheckCircle, Clock, ChevronRight,
+  Users, ClipboardList, ArrowUpRight,
+  BarChart3, Brain, CheckCircle, ChevronRight, Award, Target,
 } from 'lucide-react';
 import { ROUTES } from '@/lib/constants';
 import { useAdminData } from '@/hooks/useAdminData';
-import { formatPercent, formatImprovement, getAIReadinessLevel, AI_READINESS_CONFIG } from '@/lib/utils';
+import { formatPercent, getAIReadinessLevel, AI_READINESS_CONFIG } from '@/lib/utils';
 import AdminLayout from '@/components/layout/AdminLayout';
 import ProgressBar from '@/components/ui/ProgressBar';
 
@@ -30,26 +30,15 @@ function KpiCard({
 
 export default function AdminDashboard() {
   const {
-    employees, totalEmployees, preCompleted, postCompleted,
-    overallPreAvg, overallPostAvg, overallImprovement,
-    deptStats, competencyStats, readinessDistribution,
+    totalEmployees, submitted, evaluated,
+    overallAvg, deptStats, competencyStats, readinessDistribution, recentSubmissions,
   } = useAdminData();
 
-  const completionPct = (preCompleted / totalEmployees) * 100;
-  const postPct = (postCompleted / preCompleted) * 100;
-
-  // Top 5 most recent submissions
-  const recentSubmissions = [...employees]
-    .filter((e) => e.postSubmittedAt || e.preSubmittedAt)
-    .sort((a, b) => {
-      const aDate = a.postSubmittedAt ?? a.preSubmittedAt ?? '';
-      const bDate = b.postSubmittedAt ?? b.preSubmittedAt ?? '';
-      return bDate.localeCompare(aDate);
-    })
-    .slice(0, 6);
+  const completionPct = (submitted / totalEmployees) * 100;
+  const evaluatedPct = submitted > 0 ? (evaluated / submitted) * 100 : 0;
 
   // Top performing department
-  const topDept = [...deptStats].sort((a, b) => b.improvement - a.improvement)[0];
+  const topDept = [...deptStats].sort((a, b) => b.avgScore - a.avgScore)[0];
 
   return (
     <AdminLayout>
@@ -58,7 +47,7 @@ export default function AdminDashboard() {
         <div>
           <h1 className="page-title">Platform Overview</h1>
           <p className="page-subtitle">
-            SUROJ × BE10X · AI Workforce Assessment Dashboard
+            SUROJ × BE10X · Post-Training AI Assessment Dashboard
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -74,76 +63,62 @@ export default function AdminDashboard() {
       {/* KPI Grid */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <KpiCard icon={Users} label="Total Employees" value={totalEmployees} sub="Across 6 departments" accent />
-        <KpiCard icon={ClipboardList} label="Pre-Assessment" value={preCompleted} sub={`${formatPercent(completionPct, 0)} completion`} />
-        <KpiCard icon={CheckCircle} label="Post-Assessment" value={postCompleted} sub={`${formatPercent(postPct, 0)} of pre-completers`} />
-        <KpiCard icon={TrendingUp} label="Avg Improvement" value={`+${overallImprovement.toFixed(1)}%`} sub="Pre → Post delta" />
+        <KpiCard icon={ClipboardList} label="Submitted" value={submitted} sub={`${formatPercent(completionPct, 0)} completion`} />
+        <KpiCard icon={CheckCircle} label="Evaluated" value={evaluated} sub={`${formatPercent(evaluatedPct, 0)} of submissions`} />
+        <KpiCard icon={Target} label="Overall Average" value={formatPercent(overallAvg, 1)} sub="Post-training score" />
       </div>
 
-      {/* Score Overview Card */}
+      {/* Score Overview */}
       <div className="grid lg:grid-cols-3 gap-5 mb-8">
-        {/* Aggregate Scores */}
+        {/* Readiness Distribution */}
         <div className="card p-6 lg:col-span-2">
           <div className="flex items-center gap-2 mb-5">
             <Brain className="w-4 h-4 text-brand-gold" />
-            <h2 className="font-semibold text-brand-navy">Overall AI Readiness</h2>
-          </div>
-          <div className="grid sm:grid-cols-2 gap-6 mb-6">
-            <div>
-              <div className="flex justify-between mb-2">
-                <span className="text-sm text-brand-muted">Pre-Training Baseline</span>
-                <span className="text-sm font-bold text-brand-navy">{formatPercent(overallPreAvg, 1)}</span>
-              </div>
-              <ProgressBar value={overallPreAvg} height="md" color="bg-brand-muted/40" />
-            </div>
-            <div>
-              <div className="flex justify-between mb-2">
-                <span className="text-sm text-brand-muted">Post-Training Score</span>
-                <span className="text-sm font-bold text-success-600">{formatPercent(overallPostAvg, 1)}</span>
-              </div>
-              <ProgressBar value={overallPostAvg} colorByScore height="md" />
-            </div>
+            <h2 className="font-semibold text-brand-navy">Post-Training Readiness Distribution</h2>
           </div>
 
-          {/* Readiness Distribution */}
-          <div className="border-t border-brand-border pt-4">
-            <p className="text-xs text-brand-muted font-semibold uppercase tracking-wider mb-3">Post-Training Readiness Distribution</p>
-            <div className="space-y-2">
-              {(Object.entries(readinessDistribution) as [string, number][]).reverse().map(([level, count]) => {
-                const config = AI_READINESS_CONFIG[level as keyof typeof AI_READINESS_CONFIG];
-                const pct = postCompleted > 0 ? (count / postCompleted) * 100 : 0;
-                return (
-                  <div key={level} className="flex items-center gap-3">
-                    <div className={`w-2 h-2 rounded-full ${config.bgColor.replace('bg-', 'bg-').replace('-50', '-400')}`} />
-                    <span className="text-xs text-brand-charcoal w-32 shrink-0">{config.label}</span>
-                    <div className="flex-1">
-                      <ProgressBar value={pct} height="sm" color={
-                        level === 'ai_leader' ? 'bg-purple-500' :
-                        level === 'advanced' ? 'bg-success-500' :
-                        level === 'operational' ? 'bg-blue-500' :
-                        level === 'developing' ? 'bg-warning-500' : 'bg-danger-500'
-                      } />
-                    </div>
-                    <span className="text-xs text-brand-muted w-8 text-right">{count}</span>
+          <div className="text-center mb-6">
+            <div className="text-4xl font-bold text-brand-navy mb-1">{formatPercent(overallAvg, 1)}</div>
+            <div className="text-sm text-brand-muted">Organisation-Wide Average Score</div>
+            <ProgressBar value={overallAvg} colorByScore height="md" className="mt-3" />
+          </div>
+
+          <div className="space-y-2">
+            {(Object.entries(readinessDistribution) as [string, number][]).reverse().map(([level, count]) => {
+              const config = AI_READINESS_CONFIG[level as keyof typeof AI_READINESS_CONFIG];
+              const pct = submitted > 0 ? (count / submitted) * 100 : 0;
+              return (
+                <div key={level} className="flex items-center gap-3">
+                  <div className={`w-2 h-2 rounded-full ${config.bgColor.replace('bg-', 'bg-').replace('-50', '-400')}`} />
+                  <span className="text-xs text-brand-charcoal w-32 shrink-0">{config.label}</span>
+                  <div className="flex-1">
+                    <ProgressBar value={pct} height="sm" color={
+                      level === 'ai_leader' ? 'bg-purple-500' :
+                      level === 'advanced' ? 'bg-success-500' :
+                      level === 'operational' ? 'bg-blue-500' :
+                      level === 'developing' ? 'bg-warning-500' : 'bg-danger-500'
+                    } />
                   </div>
-                );
-              })}
-            </div>
+                  <span className="text-xs text-brand-muted w-8 text-right">{count}</span>
+                </div>
+              );
+            })}
           </div>
         </div>
 
-        {/* Top Dept */}
+        {/* Dept Highlights */}
         <div className="card p-6 flex flex-col">
           <div className="flex items-center gap-2 mb-4">
             <Award className="w-4 h-4 text-brand-gold" />
-            <h2 className="font-semibold text-brand-navy">Department Highlights</h2>
+            <h2 className="font-semibold text-brand-navy">Department Scores</h2>
           </div>
 
           {topDept && (
             <div className="gradient-navy rounded-xl p-4 mb-4">
-              <div className="text-xs text-white/50 mb-1">Highest Improvement</div>
+              <div className="text-xs text-white/50 mb-1">Highest Scoring Department</div>
               <div className="text-sm font-bold text-white mb-0.5">{topDept.name.split(' / ')[0]}</div>
               <div className="text-2xl font-bold text-brand-gold">
-                +{topDept.improvement.toFixed(1)}%
+                {formatPercent(topDept.avgScore, 1)}
               </div>
             </div>
           )}
@@ -153,9 +128,9 @@ export default function AdminDashboard() {
               <div key={d.deptId}>
                 <div className="flex justify-between text-xs mb-1">
                   <span className="font-medium text-brand-charcoal">{d.code}</span>
-                  <span className="text-success-600 font-semibold">+{d.improvement.toFixed(1)}%</span>
+                  <span className="text-brand-navy font-semibold">{formatPercent(d.avgScore, 1)}</span>
                 </div>
-                <ProgressBar value={d.postAvg} colorByScore height="sm" />
+                <ProgressBar value={d.avgScore} colorByScore height="sm" />
               </div>
             ))}
           </div>
@@ -177,8 +152,7 @@ export default function AdminDashboard() {
           </div>
           <div className="divide-y divide-brand-border/60">
             {recentSubmissions.map((emp) => {
-              const score = emp.postScore ?? emp.preScore ?? 0;
-              const phase = emp.postScore ? 'post' : 'pre';
+              const score = emp.finalScore ?? 0;
               const level = getAIReadinessLevel(score);
               const config = AI_READINESS_CONFIG[level];
               return (
@@ -188,10 +162,13 @@ export default function AdminDashboard() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="text-sm font-medium text-brand-navy truncate">{emp.name}</div>
-                    <div className="text-xs text-brand-muted">{emp.employeeId} · {phase === 'post' ? 'Post' : 'Pre'}</div>
+                    <div className="text-xs text-brand-muted">{emp.employeeId} · Post-Training</div>
                   </div>
                   <div className="text-right shrink-0">
                     <div className={`text-sm font-bold ${config.color}`}>{formatPercent(score, 0)}</div>
+                    {emp.trainerMarks !== null && (
+                      <div className="text-xs text-brand-muted">Evaluated</div>
+                    )}
                   </div>
                 </div>
               );
@@ -199,10 +176,10 @@ export default function AdminDashboard() {
           </div>
         </div>
 
-        {/* Competency Snapshot */}
+        {/* Competency Breakdown */}
         <div className="card">
           <div className="card-header flex items-center justify-between">
-            <h2 className="font-semibold text-brand-navy text-sm">Competency Improvement</h2>
+            <h2 className="font-semibold text-brand-navy text-sm">Competency Scores</h2>
             <Link to={ROUTES.adminAnalytics} className="text-xs text-brand-blue hover:underline flex items-center gap-1">
               Details <ChevronRight className="w-3 h-3" />
             </Link>
@@ -212,12 +189,9 @@ export default function AdminDashboard() {
               <div key={c.key}>
                 <div className="flex justify-between items-center mb-1.5">
                   <span className="text-xs text-brand-charcoal">{c.name}</span>
-                  <span className="text-xs font-semibold text-success-600">+{c.improvement.toFixed(1)}%</span>
+                  <span className="text-xs font-semibold text-brand-navy">{formatPercent(c.avgScore, 1)}</span>
                 </div>
-                <div className="relative">
-                  <ProgressBar value={c.preAvg} height="sm" color="bg-brand-muted/25" className="mb-0.5" />
-                  <ProgressBar value={c.postAvg} colorByScore height="sm" />
-                </div>
+                <ProgressBar value={c.avgScore} colorByScore height="sm" />
               </div>
             ))}
           </div>

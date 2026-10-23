@@ -4,15 +4,8 @@ import { Brain, Clock, FileQuestion, AlertTriangle, Shield, ChevronRight } from 
 import { ROUTES, DEPARTMENTS, DEPARTMENT_MAP, ASSESSMENT_DEFAULTS } from '@/lib/constants';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLocalAssessment } from '@/hooks/useLocalAssessment';
-import type { AssessmentPhase } from '@/types';
 import EmployeeLayout from '@/components/layout/EmployeeLayout';
 import Spinner from '@/components/ui/Spinner';
-
-const PHASE_LABELS = { pre: 'Pre-Training Assessment', post: 'Post-Training Assessment' };
-const PHASE_DESC = {
-  pre: 'This baseline assessment measures your current AI knowledge and skills before the Be10x training workshop.',
-  post: 'This assessment measures your AI readiness and practical capability improvement after completing the Be10x workshop.',
-};
 
 export default function AssessmentStartPage() {
   const [params] = useSearchParams();
@@ -22,24 +15,23 @@ export default function AssessmentStartPage() {
   const [starting, setStarting] = useState(false);
   const [agreed, setAgreed] = useState(false);
 
-  const phase = (params.get('phase') ?? 'pre') as AssessmentPhase;
   const deptId = params.get('dept') ?? user?.departmentId ?? DEPARTMENTS[0].id;
   const dept = DEPARTMENT_MAP[deptId as keyof typeof DEPARTMENT_MAP];
 
   // Guard: already completed
-  if (hasCompleted(phase)) {
+  if (hasCompleted) {
     return (
       <EmployeeLayout>
         <div className="max-w-lg mx-auto mt-16 text-center">
           <div className="w-16 h-16 rounded-2xl bg-success-100 flex items-center justify-center mx-auto mb-4">
             <Brain className="w-8 h-8 text-success-600" />
           </div>
-          <h1 className="text-xl font-bold text-brand-navy mb-2">Assessment Already Completed</h1>
+          <h1 className="text-xl font-bold text-brand-navy mb-2">Assessment Already Submitted</h1>
           <p className="text-brand-muted mb-6">
-            You have already submitted the {PHASE_LABELS[phase]}. Each phase can only be attempted once.
+            You have already submitted the Post-Training Assessment. Each employee can only attempt once.
           </p>
-          <button onClick={() => navigate(ROUTES.employeeResults)} className="btn-primary">
-            View My Results
+          <button onClick={() => navigate(ROUTES.employeeDashboard)} className="btn-primary">
+            Go to Dashboard
           </button>
         </div>
       </EmployeeLayout>
@@ -51,7 +43,7 @@ export default function AssessmentStartPage() {
     setStarting(true);
     try {
       const empId = user?.employeeId ?? user?.email ?? 'demo';
-      const session = startAssessment(empId, deptId, phase);
+      const session = startAssessment(empId, deptId);
       navigate(`/assessment/${session.id}`);
     } catch {
       setStarting(false);
@@ -68,11 +60,14 @@ export default function AssessmentStartPage() {
           </div>
           <div className="inline-flex items-center gap-2 bg-brand-navy/10 rounded-full px-3 py-1 mb-4">
             <span className="text-xs font-semibold text-brand-navy uppercase tracking-wide">
-              {phase === 'pre' ? 'Pre-Training' : 'Post-Training'}
+              Post-Training Assessment
             </span>
           </div>
-          <h1 className="text-3xl font-bold text-brand-navy mb-3">{PHASE_LABELS[phase]}</h1>
-          <p className="text-brand-muted max-w-lg mx-auto">{PHASE_DESC[phase]}</p>
+          <h1 className="text-3xl font-bold text-brand-navy mb-3">AI Workforce Assessment</h1>
+          <p className="text-brand-muted max-w-lg mx-auto">
+            This assessment measures your AI knowledge and practical application skills following the Be10x workshop.
+            Department: <strong>{dept?.name ?? deptId}</strong>.
+          </p>
         </div>
 
         {/* Assessment Info */}
@@ -101,7 +96,7 @@ export default function AssessmentStartPage() {
               'Some questions are scenario-based and require written responses. Be specific and practical.',
               'This assessment is confidential. Do not share questions with colleagues.',
               'Subjective answers will be reviewed and scored by assessors after submission.',
-              `You have exactly one attempt for this ${phase === 'pre' ? 'pre' : 'post'}-training assessment.`,
+              'You have exactly one attempt for this post-training assessment.',
             ].map((rule, i) => (
               <li key={i} className="flex items-start gap-3 text-sm text-brand-charcoal">
                 <span className="w-5 h-5 rounded-full bg-brand-navy text-white text-xs flex items-center justify-center shrink-0 mt-0.5">

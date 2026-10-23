@@ -1,9 +1,9 @@
 /**
- * Local assessment engine — provides a fully working assessment experience
- * using the static question bank. Persists state to localStorage.
+ * Local assessment engine — provides a fully working post-training assessment
+ * experience using the static question bank. Persists state to localStorage.
  */
 import { useState, useCallback } from 'react';
-import type { AssessmentPhase, DeliveredQuestion, AnswerDraft, QuestionType, CompetencyKey, Difficulty } from '@/types';
+import type { DeliveredQuestion, AnswerDraft, QuestionType, CompetencyKey, Difficulty } from '@/types';
 import { ASSESSMENT_DEFAULTS } from '@/lib/constants';
 
 // ─── Import question banks ──────────────────────────────────
@@ -38,6 +38,7 @@ type SeedQ = {
   is_active?: boolean;
 };
 
+// Use all available questions — both pre and post banks are valid content
 const ALL_QUESTIONS: SeedQ[] = [
   ...COMMON_PRE_QUESTIONS,
   ...COMMON_POST_QUESTIONS,
@@ -61,20 +62,18 @@ const ALL_QUESTIONS: SeedQ[] = [
   ...DDQ_PRACTICAL,
 ] as SeedQ[];
 
-function getQuestionsForDept(departmentId: string, phase: AssessmentPhase): DeliveredQuestion[] {
+function getQuestionsForDept(departmentId: string): DeliveredQuestion[] {
   const pool = ALL_QUESTIONS.filter((q) => {
     if (!q.id || !q.question_type) return false;
-    const phaseOk = q.assessment_phase === phase || q.assessment_phase === 'both';
     const deptOk = !q.department_id || q.department_id === departmentId;
-    return phaseOk && deptOk && q.is_active !== false;
+    return deptOk && q.is_active !== false;
   });
 
   // Shuffle
   const shuffled = [...pool].sort(() => Math.random() - 0.5);
-  // Select at most ASSESSMENT_DEFAULTS.questionCount, ensuring mix of dept-specific + common
   const deptSpecific = shuffled.filter((q) => q.department_id === departmentId);
   const common = shuffled.filter((q) => !q.department_id);
-  
+
   const deptCount = Math.min(deptSpecific.length, Math.floor(ASSESSMENT_DEFAULTS.questionCount * 0.4));
   const commonCount = Math.min(common.length, ASSESSMENT_DEFAULTS.questionCount - deptCount);
   const selected = [...deptSpecific.slice(0, deptCount), ...common.slice(0, commonCount)].sort(() => Math.random() - 0.5);
@@ -120,12 +119,11 @@ function scoreAnswer(questionId: string, answer: AnswerDraft): { awarded: number
 
 // ─── Types ──────────────────────────────────────────────────
 const SESSION_KEY = 'suroj_assessment_session';
-const RESULTS_KEY = 'suroj_results';
+const RESULT_KEY = 'suroj_post_result';
 
 export interface LocalSession {
   id: string;
   employeeId: string;
-  phase: AssessmentPhase;
   departmentId: string;
   questions: DeliveredQuestion[];
   answers: Record<string, AnswerDraft>;
@@ -137,7 +135,6 @@ export interface LocalSession {
 
 export interface LocalResult {
   sessionId: string;
-  phase: AssessmentPhase;
   departmentId: string;
   submittedAt: string;
   rawScore: number;
@@ -151,29 +148,29 @@ function loadSession(): LocalSession | null {
   try { return JSON.parse(localStorage.getItem(SESSION_KEY) ?? 'null'); } catch { return null; }
 }
 function saveSession(s: LocalSession) { localStorage.setItem(SESSION_KEY, JSON.stringify(s)); }
-function loadResults(): LocalResult[] {
-  try { return JSON.parse(localStorage.getItem(RESULTS_KEY) ?? '[]'); } catch { return []; }
+function loadResult(): LocalResult | null {
+  try { return JSON.parse(localStorage.getItem(RESULT_KEY) ?? 'null'); } catch { return null; }
 }
-function saveResult(r: LocalResult) {
-  const results = loadResults().filter((x) => !(x.phase === r.phase));
-  results.push(r);
-  localStorage.setItem(RESULTS_KEY, JSON.stringify(results));
+function persistResult(r: LocalResult) {
+  localStorage.setItem(RESULT_KEY, JSON.stringify(r));
 }
 
 // ─── Hook ───────────────────────────────────────────────────
 export function useLocalAssessment() {
   const [session, setSession] = useState<LocalSession | null>(loadSession);
-  const [results, setResults] = useState<LocalResult[]>(loadResults);
+  const [result, setResult] = useState<LocalResult | null>(loadResult);
+
+  const hasCompleted = result !== null;
 
   const startAssessment = useCallback((
-    employeeId: string, departmentId: string, phase: AssessmentPhase,
+    employeeId: string, departmentId: string,
   ): LocalSession => {
-    const questions = getQuestionsForDept(departmentId, phase);
+    const questions = getQuestionsForDept(departmentId);
     const now = new Date();
     const expires = new Date(now.getTime() + ASSESSMENT_DEFAULTS.durationMinutes * 60 * 1000);
     const newSession: LocalSession = {
       id: `sess-${Date.now()}`,
-      employeeId, phase, departmentId, questions,
+      employeeId, departmentId, questions,
       answers: {},
       startedAt: now.toISOString(),
       expiresAt: expires.toISOString(),
@@ -220,8 +217,8 @@ export function useLocalAssessment() {
       competencyScores[key] = { score, max, percentage: max > 0 ? (score / max) * 100 : 0 };
     }
 
-    const result: LocalResult = {
-      sessionId: s.id, phase: s.phase, departmentId: s.departmentId,
+    const newResult: LocalResult = {
+      sessionId: s.id, departmentId: s.departmentId,
       submittedAt: now.toISOString(), rawScore, maxScore,
       percentage: maxScore > 0 ? (rawScore / maxScore) * 100 : 0,
       competencyScores, timeTaken,
@@ -230,9 +227,9 @@ export function useLocalAssessment() {
     const submitted = { ...s, submittedAt: now.toISOString(), status: 'submitted' as const };
     saveSession(submitted);
     setSession(submitted);
-    saveResult(result);
-    setResults(loadResults());
-    return result;
+    persistResult(newResult);
+    setResult(newResult);
+    return newResult;
   }, []);
 
   const clearSession = useCallback(() => {
@@ -240,13 +237,5 @@ export function useLocalAssessment() {
     setSession(null);
   }, []);
 
-  const hasCompleted = useCallback((phase: AssessmentPhase) => {
-    return results.some((r) => r.phase === phase);
-  }, [results]);
-
-  const getResult = useCallback((phase: AssessmentPhase): LocalResult | undefined => {
-    return results.find((r) => r.phase === phase);
-  }, [results]);
-
-  return { session, results, startAssessment, saveAnswer, submitAssessment, clearSession, hasCompleted, getResult };
+  return { session, result, hasCompleted, startAssessment, saveAnswer, submitAssessment, clearSession };
 }

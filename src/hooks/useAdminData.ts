@@ -1,6 +1,8 @@
 /**
- * Mock admin data — generates realistic demo data from the local assessment store
- * and synthesises organisation-wide analytics for the admin portal.
+ * Mock admin data — generates realistic demo data for the post-training
+ * assessment platform across all six Suroj departments.
+ *
+ * In production this would be replaced by Supabase queries.
  */
 import { useMemo } from 'react';
 import { DEPARTMENTS, COMPETENCIES } from '@/lib/constants';
@@ -23,12 +25,11 @@ export interface MockEmployee {
   employeeId: string;
   departmentId: string;
   role: string;
-  preScore: number | null;
   postScore: number | null;
-  preSubmittedAt: string | null;
   postSubmittedAt: string | null;
-  preTimeTaken: number | null;
   postTimeTaken: number | null;
+  trainerMarks: number | null;
+  finalScore: number | null;
 }
 
 export interface DeptStat {
@@ -36,18 +37,15 @@ export interface DeptStat {
   name: string;
   code: string;
   count: number;
-  preAvg: number;
-  postAvg: number;
-  improvement: number;
+  submitted: number;
+  avgScore: number;
   completionRate: number;
 }
 
 export interface CompetencyStat {
   key: string;
   name: string;
-  preAvg: number;
-  postAvg: number;
-  improvement: number;
+  avgScore: number;
 }
 
 // ─── Sample names ────────────────────────────────────────────
@@ -71,8 +69,7 @@ const ROLES: Record<string, string[]> = {
   'dept-06': ['Senior Designer', 'Quantity Surveyor', 'Drawing Manager', 'Structural Lead', 'Design Engineer'],
 };
 
-const BASE_DATE = new Date('2024-11-04');
-const POST_DATE = new Date('2024-11-08');
+const ASSESSMENT_DATE = new Date('2024-11-08');
 
 function dateStr(base: Date, offset: number): string {
   const d = new Date(base.getTime() + offset * 3600_000);
@@ -97,14 +94,16 @@ function generateEmployees(): MockEmployee[] {
       const roles = ROLES[dept.id] ?? ['Executive'];
       const role = roles[Math.floor(rng() * roles.length)];
 
-      // Scores — varied by department and individual
-      const deptBaseline = 38 + di * 3; // dept-level variance
-      const preRaw = Math.max(18, Math.min(82, deptBaseline + (rng() * 40 - 20)));
-      const improvement = 8 + rng() * 22; // 8–30% improvement after training
-      const postRaw = Math.min(98, preRaw + improvement);
+      // Post-training scores — varied by department
+      const deptBase = 52 + di * 3;
+      const postRaw = Math.max(28, Math.min(96, deptBase + (rng() * 40 - 16)));
 
-      // Some employees haven't taken post yet
-      const tookPost = rng() > 0.18;
+      // Some employees haven't submitted yet
+      const submitted = rng() > 0.12;
+      // Some have trainer marks applied
+      const hasTrainerMark = submitted && rng() > 0.45;
+      const trainerMark = hasTrainerMark ? Math.round((postRaw * 0.8 + rng() * 20) * 10) / 10 : null;
+      const finalScore = hasTrainerMark ? trainerMark : (submitted ? Math.round(postRaw * 10) / 10 : null);
 
       employees.push({
         id: `emp-${empNum}`,
@@ -113,12 +112,11 @@ function generateEmployees(): MockEmployee[] {
         employeeId: `SRJ-${empNum}`,
         departmentId: dept.id,
         role,
-        preScore: Math.round(preRaw * 10) / 10,
-        postScore: tookPost ? Math.round(postRaw * 10) / 10 : null,
-        preSubmittedAt: dateStr(BASE_DATE, i * 0.3 + di * 0.5),
-        postSubmittedAt: tookPost ? dateStr(POST_DATE, i * 0.3 + di * 0.5) : null,
-        preTimeTaken: Math.floor(2400 + rng() * 2400), // 40–80 min
-        postTimeTaken: tookPost ? Math.floor(2400 + rng() * 2400) : null,
+        postScore: submitted ? Math.round(postRaw * 10) / 10 : null,
+        postSubmittedAt: submitted ? dateStr(ASSESSMENT_DATE, i * 0.3 + di * 0.5) : null,
+        postTimeTaken: submitted ? Math.floor(2400 + rng() * 2400) : null, // 40–80 min
+        trainerMarks: trainerMark,
+        finalScore,
       });
       empNum++;
     }
@@ -132,52 +130,41 @@ export function useAdminData() {
   const employees = useMemo(() => generateEmployees(), []);
 
   const totalEmployees = employees.length;
-  const preCompleted = employees.filter((e) => e.preScore !== null).length;
-  const postCompleted = employees.filter((e) => e.postScore !== null).length;
+  const submitted = employees.filter((e) => e.postScore !== null).length;
+  const evaluated = employees.filter((e) => e.trainerMarks !== null).length;
 
-  const preScores = employees.filter((e) => e.preScore !== null).map((e) => e.preScore!);
-  const postScores = employees.filter((e) => e.postScore !== null).map((e) => e.postScore!);
-
+  const postScores = employees.filter((e) => e.finalScore !== null).map((e) => e.finalScore!);
   const avg = (arr: number[]) => arr.length ? arr.reduce((s, v) => s + v, 0) / arr.length : 0;
 
-  const overallPreAvg = avg(preScores);
-  const overallPostAvg = avg(postScores);
-  const overallImprovement = overallPostAvg - overallPreAvg;
+  const overallAvg = avg(postScores);
 
   // Department stats
   const deptStats: DeptStat[] = DEPARTMENTS.map((dept) => {
     const deptEmps = employees.filter((e) => e.departmentId === dept.id);
-    const pre = deptEmps.filter((e) => e.preScore !== null).map((e) => e.preScore!);
-    const post = deptEmps.filter((e) => e.postScore !== null).map((e) => e.postScore!);
-    const preAvg = avg(pre);
-    const postAvg = avg(post);
+    const scores = deptEmps.filter((e) => e.finalScore !== null).map((e) => e.finalScore!);
     return {
       deptId: dept.id,
       name: dept.name,
       code: dept.code,
       count: deptEmps.length,
-      preAvg,
-      postAvg,
-      improvement: postAvg - preAvg,
-      completionRate: pre.length > 0 ? (post.length / pre.length) * 100 : 0,
+      submitted: scores.length,
+      avgScore: avg(scores),
+      completionRate: deptEmps.length > 0 ? (scores.length / deptEmps.length) * 100 : 0,
     };
   });
 
-  // Competency stats (mock — derived from department averages)
+  // Competency stats (mock — derived from seeded data)
   const competencyStats: CompetencyStat[] = COMPETENCIES.map((comp, i) => {
     const rng = seededRand(i * 113 + 7);
-    const preBase = 38 + rng() * 25;
-    const improvementFactor = 8 + rng() * 18;
+    const avgScore = Math.round((52 + rng() * 35) * 10) / 10;
     return {
       key: comp.category,
       name: comp.name,
-      preAvg: Math.round(preBase * 10) / 10,
-      postAvg: Math.round(Math.min(95, preBase + improvementFactor) * 10) / 10,
-      improvement: Math.round(improvementFactor * 10) / 10,
+      avgScore,
     };
   });
 
-  // Readiness distribution (post scores)
+  // Readiness distribution (post final scores)
   const readinessDistribution = {
     needs_development: postScores.filter((s) => getAIReadinessLevel(s) === 'needs_development').length,
     developing: postScores.filter((s) => getAIReadinessLevel(s) === 'developing').length,
@@ -186,16 +173,21 @@ export function useAdminData() {
     ai_leader: postScores.filter((s) => getAIReadinessLevel(s) === 'ai_leader').length,
   };
 
+  // Recent submissions
+  const recentSubmissions = [...employees]
+    .filter((e) => e.postSubmittedAt !== null)
+    .sort((a, b) => (b.postSubmittedAt ?? '').localeCompare(a.postSubmittedAt ?? ''))
+    .slice(0, 6);
+
   return {
     employees,
     totalEmployees,
-    preCompleted,
-    postCompleted,
-    overallPreAvg,
-    overallPostAvg,
-    overallImprovement,
+    submitted,
+    evaluated,
+    overallAvg,
     deptStats,
     competencyStats,
     readinessDistribution,
+    recentSubmissions,
   };
 }

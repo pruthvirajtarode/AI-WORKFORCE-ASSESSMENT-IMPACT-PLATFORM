@@ -1,19 +1,19 @@
 import { DEPARTMENTS, ASSESSMENT_DEFAULTS } from '@/lib/constants';
 import { useAdminData } from '@/hooks/useAdminData';
-import { formatPercent, formatDateTime, getAIReadinessLevel, AI_READINESS_CONFIG } from '@/lib/utils';
+import { formatPercent, getAIReadinessLevel, AI_READINESS_CONFIG } from '@/lib/utils';
 import AdminLayout from '@/components/layout/AdminLayout';
 import ProgressBar from '@/components/ui/ProgressBar';
-import { ClipboardCheck, Users, TrendingUp, BarChart3 } from 'lucide-react';
+import { ClipboardCheck, BarChart3, CheckCircle } from 'lucide-react';
 
 export default function AdminAssessmentsPage() {
-  const { deptStats, totalEmployees, preCompleted, postCompleted } = useAdminData();
+  const { deptStats, totalEmployees, submitted, evaluated } = useAdminData();
 
   return (
     <AdminLayout>
       <div className="page-header">
         <h1 className="page-title">Assessment Management</h1>
         <p className="page-subtitle">
-          Overview of assessment phases, configuration, and completion status
+          Post-training assessment configuration and department completion status
         </p>
       </div>
 
@@ -32,51 +32,51 @@ export default function AdminAssessmentsPage() {
         ))}
       </div>
 
-      {/* Phase Cards */}
+      {/* Assessment Status */}
       <div className="grid sm:grid-cols-2 gap-5 mb-8">
-        {/* Pre-Training */}
+        {/* Submission Status */}
         <div className="card p-6">
           <div className="flex items-center gap-2 mb-4">
             <div className="w-8 h-8 rounded-lg bg-brand-navy/10 flex items-center justify-center">
               <ClipboardCheck className="w-4 h-4 text-brand-navy" />
             </div>
             <div>
-              <h2 className="font-semibold text-brand-navy text-sm">Pre-Training Assessment</h2>
-              <p className="text-xs text-brand-muted">Baseline AI readiness before Be10x workshop</p>
+              <h2 className="font-semibold text-brand-navy text-sm">Post-Training Submissions</h2>
+              <p className="text-xs text-brand-muted">AI assessment after Be10x workshop</p>
             </div>
           </div>
           <div className="space-y-3 mb-4">
             <div className="flex justify-between text-sm">
-              <span className="text-brand-muted">Completed</span>
-              <span className="font-semibold text-brand-navy">{preCompleted} / {totalEmployees}</span>
+              <span className="text-brand-muted">Submitted</span>
+              <span className="font-semibold text-brand-navy">{submitted} / {totalEmployees}</span>
             </div>
-            <ProgressBar value={(preCompleted / totalEmployees) * 100} colorByScore />
+            <ProgressBar value={(submitted / totalEmployees) * 100} colorByScore />
           </div>
           <div className="bg-success-50 rounded-xl p-3 text-xs text-success-700 font-medium">
-            ✅ Assessment Active — All employees can take the pre-assessment
+            ✅ Assessment Active — All employees can submit the post-training assessment
           </div>
         </div>
 
-        {/* Post-Training */}
+        {/* Evaluation Status */}
         <div className="card p-6">
           <div className="flex items-center gap-2 mb-4">
             <div className="w-8 h-8 rounded-lg bg-success-100 flex items-center justify-center">
-              <TrendingUp className="w-4 h-4 text-success-600" />
+              <CheckCircle className="w-4 h-4 text-success-600" />
             </div>
             <div>
-              <h2 className="font-semibold text-brand-navy text-sm">Post-Training Assessment</h2>
-              <p className="text-xs text-brand-muted">Impact measurement after Be10x workshop</p>
+              <h2 className="font-semibold text-brand-navy text-sm">Trainer Evaluation</h2>
+              <p className="text-xs text-brand-muted">Subjective question marking by assessors</p>
             </div>
           </div>
           <div className="space-y-3 mb-4">
             <div className="flex justify-between text-sm">
-              <span className="text-brand-muted">Completed</span>
-              <span className="font-semibold text-brand-navy">{postCompleted} / {preCompleted}</span>
+              <span className="text-brand-muted">Evaluated</span>
+              <span className="font-semibold text-brand-navy">{evaluated} / {submitted}</span>
             </div>
-            <ProgressBar value={(postCompleted / Math.max(preCompleted, 1)) * 100} colorByScore />
+            <ProgressBar value={submitted > 0 ? (evaluated / submitted) * 100 : 0} colorByScore />
           </div>
           <div className="bg-blue-50 rounded-xl p-3 text-xs text-blue-700 font-medium">
-            📋 Unlocked for employees who completed pre-assessment
+            📋 Pending trainer review for {submitted - evaluated} submission{submitted - evaluated !== 1 ? 's' : ''}
           </div>
         </div>
       </div>
@@ -93,19 +93,16 @@ export default function AdminAssessmentsPage() {
               <tr>
                 <th>Department</th>
                 <th>Employees</th>
-                <th>Pre-Complete</th>
-                <th>Post-Complete</th>
-                <th>Post Completion %</th>
-                <th>Avg Pre Score</th>
-                <th>Avg Post Score</th>
-                <th>Impact</th>
+                <th>Submitted</th>
+                <th>Completion %</th>
+                <th>Avg Score</th>
+                <th>AI Readiness</th>
               </tr>
             </thead>
             <tbody>
               {deptStats.map((dept) => {
-                const postCount = Math.round(dept.count * dept.completionRate / 100);
-                const postLevel = getAIReadinessLevel(dept.postAvg);
-                const config = AI_READINESS_CONFIG[postLevel];
+                const level = dept.avgScore > 0 ? getAIReadinessLevel(dept.avgScore) : null;
+                const config = level ? AI_READINESS_CONFIG[level] : null;
                 return (
                   <tr key={dept.deptId}>
                     <td>
@@ -116,11 +113,7 @@ export default function AdminAssessmentsPage() {
                     </td>
                     <td className="font-semibold text-brand-navy">{dept.count}</td>
                     <td>
-                      <span className="text-sm text-brand-navy">{dept.count}</span>
-                      <span className="text-xs text-brand-muted ml-1">(100%)</span>
-                    </td>
-                    <td>
-                      <span className="text-sm text-brand-navy">{postCount}</span>
+                      <span className="text-sm text-brand-navy">{dept.submitted}</span>
                       <span className="text-xs text-brand-muted ml-1">({formatPercent(dept.completionRate, 0)})</span>
                     </td>
                     <td>
@@ -129,15 +122,18 @@ export default function AdminAssessmentsPage() {
                         <span className="text-xs text-brand-muted">{formatPercent(dept.completionRate, 0)}</span>
                       </div>
                     </td>
-                    <td className="text-sm text-brand-muted">{formatPercent(dept.preAvg, 1)}</td>
                     <td>
                       <div>
-                        <div className="text-sm font-medium text-brand-navy mb-1">{formatPercent(dept.postAvg, 1)}</div>
-                        <ProgressBar value={dept.postAvg} colorByScore height="sm" className="w-16" />
+                        <div className="text-sm font-medium text-brand-navy mb-1">{formatPercent(dept.avgScore, 1)}</div>
+                        <ProgressBar value={dept.avgScore} colorByScore height="sm" className="w-16" />
                       </div>
                     </td>
                     <td>
-                      <span className="text-sm font-bold text-success-600">+{dept.improvement.toFixed(1)}%</span>
+                      {config ? (
+                        <span className={`badge ${config.bgColor} ${config.color}`}>{config.label}</span>
+                      ) : (
+                        <span className="text-xs text-brand-muted">—</span>
+                      )}
                     </td>
                   </tr>
                 );

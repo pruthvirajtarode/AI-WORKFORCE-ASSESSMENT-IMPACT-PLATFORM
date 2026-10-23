@@ -16,6 +16,7 @@ export function formatScore(score: number, max: number): string {
   return `${score}/${max}`;
 }
 
+/** @deprecated No longer used — retained for compatibility. */
 export function formatImprovement(value: number): string {
   return value >= 0 ? `+${value.toFixed(1)}` : value.toFixed(1);
 }
@@ -134,12 +135,14 @@ export const DIFFICULTY_COLORS: Record<Difficulty, string> = {
 };
 
 // ─── Assessment phase labels ─────────────────────────────────
+// Only post-training is used operationally; 'pre' kept for question-bank metadata.
 export const PHASE_LABELS: Record<AssessmentPhase, string> = {
-  pre: 'Pre-Training Assessment',
+  pre: 'Question Bank (Pre-Tagged)',
   post: 'Post-Training Assessment',
 };
 
 // ─── Score calculation ───────────────────────────────────────
+/** @deprecated No pre/post comparison in current platform. Retained for compatibility. */
 export function calculateImprovement(pre: number, post: number) {
   const absolute = post - pre;
   const percentage = pre > 0 ? ((post - pre) / pre) * 100 : 0;

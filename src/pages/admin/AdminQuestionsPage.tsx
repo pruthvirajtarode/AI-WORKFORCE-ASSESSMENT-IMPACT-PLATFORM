@@ -172,8 +172,8 @@ export default function AdminQuestionsPage() {
         </select>
         <select value={phaseFilter} onChange={(e) => setPhaseFilter(e.target.value)} className="select w-auto text-sm py-2">
           <option value="all">All Phases</option>
-          <option value="pre">Pre-Training</option>
           <option value="post">Post-Training</option>
+          <option value="both">Common (Both)</option>
         </select>
       </div>
 

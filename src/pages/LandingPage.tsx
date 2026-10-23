@@ -15,8 +15,8 @@ const features = [
   },
   {
     icon: BarChart3,
-    title: 'Pre & Post Impact Analysis',
-    desc: 'Measure actual improvement from the Be10x training with quantified ROI metrics.',
+    title: 'Post-Training Impact Analysis',
+    desc: 'Measure AI adoption from the Be10x workshop with department-wise scoring and analytics.',
   },
   {
     icon: Shield,
