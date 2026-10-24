@@ -9,7 +9,7 @@ import type { DepartmentalAssessment } from '@/types/departmentalAssessment';
 import EmployeeLayout from '@/components/layout/EmployeeLayout';
 import LoadingScreen from '@/components/ui/LoadingScreen';
 
-const assessments = assessmentsData as DepartmentalAssessment[];
+const assessments = assessmentsData as unknown as DepartmentalAssessment[];
 
 export default function AssessmentResultPage() {
   const { sessionNumber: routeSession, attemptId } = useParams<{ sessionNumber: string; attemptId: string }>();

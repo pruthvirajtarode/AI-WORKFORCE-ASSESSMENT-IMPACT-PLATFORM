@@ -11,7 +11,7 @@ import Modal from '@/components/ui/Modal';
 import EmployeeLayout from '@/components/layout/EmployeeLayout';
 import LoadingScreen from '@/components/ui/LoadingScreen';
 
-const assessments = assessmentsData as DepartmentalAssessment[];
+const assessments = assessmentsData as unknown as DepartmentalAssessment[];
 
 type Prompt = {
   id: string;
@@ -28,31 +28,46 @@ type Prompt = {
 };
 
 function getPrompts(assessment: DepartmentalAssessment): Prompt[] {
-  return assessment.parts.flatMap((part) => part.qs.flatMap((question: AssessmentQuestionSource) => {
-    if (question.type === 'cw') {
-      return Object.entries(question.items ?? {}).map(([id, text]) => ({
-        id,
-        type: 'cw' as const,
-        text,
-        options: [{ id: 'C', text: 'Correct' }, { id: 'W', text: 'Wrong' }],
-        part,
-      }));
+  const prompts: Prompt[] = [];
+  for (const part of assessment.parts) {
+    for (const question of part.qs as AssessmentQuestionSource[]) {
+      if (question.type === 'cw') {
+        for (const [id, text] of Object.entries(question.items ?? {})) {
+          prompts.push({
+            id,
+            type: 'cw',
+            text,
+            options: [{ id: 'C', text: 'Correct' }, { id: 'W', text: 'Wrong' }],
+            part,
+          });
+        }
+      } else if (question.type === 'annexq') {
+        prompts.push({
+          id: question.id,
+          type: 'annexq',
+          text: question.text,
+          optional: question.optional,
+          manual: question.manual,
+          part,
+        });
+      } else {
+        prompts.push({
+          id: question.id,
+          type: question.type,
+          text: question.text,
+          options: question.opts ? Object.entries(question.opts).map(([id, text]) => ({ id, text })) : undefined,
+          unit: question.unit,
+          optional: question.optional,
+          manual: question.manual,
+          short: question.short,
+          url: question.url,
+          placeholder: question.ph,
+          part,
+        });
+      }
     }
-    if (question.type === 'annexq') return [{ ...question, part }];
-    return [{
-      id: question.id,
-      type: question.type,
-      text: question.text,
-      options: question.opts ? Object.entries(question.opts).map(([id, text]) => ({ id, text })) : undefined,
-      unit: question.unit,
-      optional: question.optional,
-      manual: question.manual,
-      short: question.short,
-      url: question.url,
-      placeholder: question.ph,
-      part,
-    }];
-  }));
+  }
+  return prompts;
 }
 
 function hasAnswer(answer: AssessmentAnswer | undefined) {
