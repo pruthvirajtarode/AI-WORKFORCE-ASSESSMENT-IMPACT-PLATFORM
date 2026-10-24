@@ -8,6 +8,8 @@ import { useAdminData } from '@/hooks/useAdminData';
 import { formatPercent, getAIReadinessLevel, AI_READINESS_CONFIG } from '@/lib/utils';
 import AdminLayout from '@/components/layout/AdminLayout';
 import ProgressBar from '@/components/ui/ProgressBar';
+import EmptyState from '@/components/ui/EmptyState';
+import LoadingScreen from '@/components/ui/LoadingScreen';
 
 function KpiCard({
   icon: Icon, label, value, sub, accent = false,
@@ -30,15 +32,16 @@ function KpiCard({
 
 export default function AdminDashboard() {
   const {
-    totalEmployees, submitted, evaluated,
-    overallAvg, deptStats, competencyStats, readinessDistribution, recentSubmissions,
+    totalEmployees, submitted, employeesSubmitted, evaluated,
+    overallAvg, hasScores, isLoading, hasError, deptStats, competencyStats, readinessDistribution, recentSubmissions,
   } = useAdminData();
 
-  const completionPct = (submitted / totalEmployees) * 100;
+  const completionPct = totalEmployees > 0 ? (employeesSubmitted / totalEmployees) * 100 : 0;
   const evaluatedPct = submitted > 0 ? (evaluated / submitted) * 100 : 0;
 
-  // Top performing department
-  const topDept = [...deptStats].sort((a, b) => b.avgScore - a.avgScore)[0];
+  const topDept = deptStats.filter((department) => department.hasScores).sort((a, b) => b.avgScore - a.avgScore)[0];
+
+  if (isLoading) return <LoadingScreen />;
 
   return (
     <AdminLayout>
@@ -60,12 +63,14 @@ export default function AdminDashboard() {
         </div>
       </div>
 
+      {hasError && <div role="alert" className="bg-danger-50 border border-danger-200 rounded-lg p-4 mb-5 text-sm text-danger-700">Live admin data could not be loaded. Check Supabase connectivity and administrator RLS policies, then refresh.</div>}
+
       {/* KPI Grid */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <KpiCard icon={Users} label="Total Employees" value={totalEmployees} sub="Across 6 departments" accent />
-        <KpiCard icon={ClipboardList} label="Submitted" value={submitted} sub={`${formatPercent(completionPct, 0)} completion`} />
-        <KpiCard icon={CheckCircle} label="Evaluated" value={evaluated} sub={`${formatPercent(evaluatedPct, 0)} of submissions`} />
-        <KpiCard icon={Target} label="Overall Average" value={formatPercent(overallAvg, 1)} sub="Post-training score" />
+        <KpiCard icon={ClipboardList} label="Submitted Attempts" value={submitted} sub={totalEmployees ? `${formatPercent(completionPct, 0)} employees completed` : 'No active employees'} />
+        <KpiCard icon={CheckCircle} label="Evaluated" value={evaluated} sub={submitted ? `${formatPercent(evaluatedPct, 0)} of submissions` : 'No submissions'} />
+        <KpiCard icon={Target} label="Overall Average" value={hasScores ? formatPercent(overallAvg, 1) : 'N/A'} sub={hasScores ? 'Evaluated results' : 'No scored results'} />
       </div>
 
       {/* Score Overview */}
@@ -77,13 +82,13 @@ export default function AdminDashboard() {
             <h2 className="font-semibold text-brand-navy">Post-Training Readiness Distribution</h2>
           </div>
 
-          <div className="text-center mb-6">
+          {hasScores ? <div className="text-center mb-6">
             <div className="text-4xl font-bold text-brand-navy mb-1">{formatPercent(overallAvg, 1)}</div>
             <div className="text-sm text-brand-muted">Organisation-Wide Average Score</div>
             <ProgressBar value={overallAvg} colorByScore height="md" className="mt-3" />
-          </div>
+          </div> : <EmptyState icon={Brain} title="No assessment results available" description="Readiness statistics will appear after result scores are stored and evaluated." />}
 
-          <div className="space-y-2">
+          {hasScores && <div className="space-y-2">
             {(Object.entries(readinessDistribution) as [string, number][]).reverse().map(([level, count]) => {
               const config = AI_READINESS_CONFIG[level as keyof typeof AI_READINESS_CONFIG];
               const pct = submitted > 0 ? (count / submitted) * 100 : 0;
@@ -103,7 +108,7 @@ export default function AdminDashboard() {
                 </div>
               );
             })}
-          </div>
+          </div>}
         </div>
 
         {/* Dept Highlights */}
@@ -123,12 +128,14 @@ export default function AdminDashboard() {
             </div>
           )}
 
+          {!topDept && <p className="text-sm text-brand-muted mb-4">No department scores yet.</p>}
+
           <div className="space-y-3 flex-1">
             {deptStats.slice(0, 4).map((d) => (
               <div key={d.deptId}>
                 <div className="flex justify-between text-xs mb-1">
                   <span className="font-medium text-brand-charcoal">{d.code}</span>
-                  <span className="text-brand-navy font-semibold">{formatPercent(d.avgScore, 1)}</span>
+                  <span className="text-brand-navy font-semibold">{d.hasScores ? formatPercent(d.avgScore, 1) : 'N/A'}</span>
                 </div>
                 <ProgressBar value={d.avgScore} colorByScore height="sm" />
               </div>
@@ -152,9 +159,8 @@ export default function AdminDashboard() {
           </div>
           <div className="divide-y divide-brand-border/60">
             {recentSubmissions.map((emp) => {
-              const score = emp.finalScore ?? 0;
-              const level = getAIReadinessLevel(score);
-              const config = AI_READINESS_CONFIG[level];
+              const score = emp.finalScore;
+              const config = score === null ? null : AI_READINESS_CONFIG[getAIReadinessLevel(score)];
               return (
                 <div key={emp.id} className="px-5 py-3.5 flex items-center gap-3 hover:bg-brand-cream/40 transition-colors">
                   <div className="w-8 h-8 rounded-lg gradient-navy flex items-center justify-center shrink-0">
@@ -165,7 +171,7 @@ export default function AdminDashboard() {
                     <div className="text-xs text-brand-muted">{emp.employeeId} · Post-Training</div>
                   </div>
                   <div className="text-right shrink-0">
-                    <div className={`text-sm font-bold ${config.color}`}>{formatPercent(score, 0)}</div>
+                    <div className={`text-sm font-bold ${config?.color ?? 'text-brand-muted'}`}>{score === null ? 'Pending evaluation' : formatPercent(score, 0)}</div>
                     {emp.trainerMarks !== null && (
                       <div className="text-xs text-brand-muted">Evaluated</div>
                     )}
@@ -173,6 +179,7 @@ export default function AdminDashboard() {
                 </div>
               );
             })}
+            {recentSubmissions.length === 0 && <EmptyState icon={ClipboardList} title="No submissions yet" description="Recent employee submissions will appear here." />}
           </div>
         </div>
 
@@ -194,6 +201,7 @@ export default function AdminDashboard() {
                 <ProgressBar value={c.avgScore} colorByScore height="sm" />
               </div>
             ))}
+            {competencyStats.length === 0 && <p className="text-sm text-brand-muted">Question-level scores are unavailable until approved answer keys and scoring data are connected.</p>}
           </div>
         </div>
       </div>

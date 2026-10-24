@@ -6,6 +6,7 @@ import { useAdminData } from '@/hooks/useAdminData';
 import { formatPercent, getAIReadinessLevel, AI_READINESS_CONFIG } from '@/lib/utils';
 import AdminLayout from '@/components/layout/AdminLayout';
 import ProgressBar from '@/components/ui/ProgressBar';
+import LoadingScreen from '@/components/ui/LoadingScreen';
 
 const STATUS_OPTIONS = [
   { value: 'all', label: 'All Employees' },
@@ -15,7 +16,7 @@ const STATUS_OPTIONS = [
 ];
 
 export default function AdminEmployeesPage() {
-  const { employees } = useAdminData();
+  const { employees, departments, isLoading, hasError } = useAdminData();
   const [search, setSearch] = useState('');
   const [deptFilter, setDeptFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -35,9 +36,9 @@ export default function AdminEmployeesPage() {
 
     if (deptFilter !== 'all') list = list.filter((e) => e.departmentId === deptFilter);
 
-    if (statusFilter === 'submitted') list = list.filter((e) => e.postScore !== null);
+    if (statusFilter === 'submitted') list = list.filter((e) => e.postSubmittedAt !== null);
     else if (statusFilter === 'evaluated') list = list.filter((e) => e.trainerMarks !== null);
-    else if (statusFilter === 'pending') list = list.filter((e) => e.postScore === null);
+    else if (statusFilter === 'pending') list = list.filter((e) => e.postSubmittedAt === null);
 
     list.sort((a, b) => {
       if (sortBy === 'name') return a.name.localeCompare(b.name);
@@ -48,6 +49,8 @@ export default function AdminEmployeesPage() {
 
     return list;
   }, [employees, search, deptFilter, statusFilter, sortBy]);
+
+  if (isLoading) return <LoadingScreen />;
 
   const handleExport = () => {
     const headers = ['Employee ID', 'Name', 'Email', 'Department', 'Role', 'Score (%)', 'Trainer Marks (%)', 'Final Score (%)'];
@@ -94,7 +97,7 @@ export default function AdminEmployeesPage() {
         </div>
         <select value={deptFilter} onChange={(e) => setDeptFilter(e.target.value)} className="select w-auto text-sm py-2">
           <option value="all">All Departments</option>
-          {DEPARTMENTS.map((d) => <option key={d.id} value={d.id}>{d.code} — {d.name.split(' / ')[0]}</option>)}
+          {departments.map((d) => <option key={d.id} value={d.id}>{d.code} — {d.name.split(' / ')[0]}</option>)}
         </select>
         <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="select w-auto text-sm py-2">
           {STATUS_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
@@ -105,6 +108,8 @@ export default function AdminEmployeesPage() {
           <option value="department">Sort: Department</option>
         </select>
       </div>
+
+      {hasError && <div role="alert" className="bg-danger-50 border border-danger-200 rounded-lg p-4 mb-5 text-sm text-danger-700">Employee data could not be loaded from Supabase. Check administrator RLS access and refresh.</div>}
 
       {/* Table */}
       <div className="card">
@@ -135,7 +140,8 @@ export default function AdminEmployeesPage() {
                 const displayScore = emp.finalScore;
                 const level = displayScore !== null ? getAIReadinessLevel(displayScore) : null;
                 const levelConfig = level ? AI_READINESS_CONFIG[level] : null;
-                const dept = DEPARTMENT_MAP[emp.departmentId as keyof typeof DEPARTMENT_MAP];
+                const dept = departments.find((department) => department.id === emp.departmentId)
+                  ?? DEPARTMENT_MAP[emp.departmentId as keyof typeof DEPARTMENT_MAP];
 
                 return (
                   <tr key={emp.id}>
