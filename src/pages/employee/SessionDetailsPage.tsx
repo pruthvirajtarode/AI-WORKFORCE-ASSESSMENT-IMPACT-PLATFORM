@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, ArrowRight, CheckCircle2, Clock3, FileText, ShieldCheck } from 'lucide-react';
 import assessmentsData from '@/data/departmentalAssessments.json';
-import { ROUTES } from '@/lib/constants';
+import { getEmployeeSessionNumber, ROUTES } from '@/lib/constants';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSessionAssessments } from '@/hooks/useSessionAssessments';
 import type { DepartmentalAssessment } from '@/types/departmentalAssessment';
@@ -16,14 +16,15 @@ export default function SessionDetailsPage() {
   const sessionNumber = Number(routeSession);
   const assessment = assessments.find((item) => item.number === sessionNumber);
   const { user } = useAuth();
-  const { attempts, isLoading, startAttempt } = useSessionAssessments(user?.id);
+  const { attempts, isLoading, startAttempt } = useSessionAssessments(user);
+  const assignedSessionNumber = getEmployeeSessionNumber(user?.departmentId, user?.departmentCode);
   const navigate = useNavigate();
   const [starting, setStarting] = useState(false);
   const [startError, setStartError] = useState('');
   const attempt = useMemo(() => attempts.find((item) => item.sessionNumber === sessionNumber), [attempts, sessionNumber]);
 
   if (isLoading) return <LoadingScreen />;
-  if (!assessment) {
+  if (!assessment || assessment.number !== assignedSessionNumber) {
     return <EmployeeLayout><p className="text-sm text-brand-muted">Assessment session not found.</p></EmployeeLayout>;
   }
 
@@ -31,7 +32,12 @@ export default function SessionDetailsPage() {
     setStarting(true);
     setStartError('');
     try {
-      const nextAttempt = attempt ?? await startAttempt(sessionNumber, assessment.durationMinutes);
+      const nextAttempt = attempt ?? await startAttempt(
+        sessionNumber,
+        assessment.durationMinutes,
+        assessment.title,
+        assessment.totalMarks,
+      );
       navigate(`/employee/sessions/${sessionNumber}/assessment/${nextAttempt.id}`);
     } catch (error) {
       setStartError(error instanceof Error ? error.message : 'The assessment attempt could not be started.');

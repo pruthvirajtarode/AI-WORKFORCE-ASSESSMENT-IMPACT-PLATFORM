@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { ArrowRight, CheckCircle2, Clock3, FileText, LoaderCircle } from 'lucide-react';
 import assessmentsData from '@/data/departmentalAssessments.json';
+import { getEmployeeSessionNumber } from '@/lib/constants';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSessionAssessments } from '@/hooks/useSessionAssessments';
 import type { DepartmentalAssessment } from '@/types/departmentalAssessment';
@@ -11,7 +12,9 @@ const assessments = assessmentsData as unknown as DepartmentalAssessment[];
 
 export default function EmployeeDashboard() {
   const { user } = useAuth();
-  const { attempts, isLoading } = useSessionAssessments(user?.id);
+  const { attempts, isLoading } = useSessionAssessments(user);
+  const assignedSessionNumber = getEmployeeSessionNumber(user?.departmentId, user?.departmentCode);
+  const assignedAssessments = assessments.filter((assessment) => assessment.number === assignedSessionNumber);
 
   if (isLoading) return <LoadingScreen />;
 
@@ -25,7 +28,7 @@ export default function EmployeeDashboard() {
       </div>
 
       <div className="grid md:grid-cols-2 gap-x-8 gap-y-0">
-        {assessments.map((assessment) => {
+        {assignedAssessments.map((assessment) => {
           const attempt = attempts.find((item) => item.sessionNumber === assessment.number);
           const completed = attempt?.status === 'submitted';
           const inProgress = attempt?.status === 'in_progress';
@@ -56,6 +59,7 @@ export default function EmployeeDashboard() {
             </Link>
           );
         })}
+        {assignedAssessments.length === 0 && <p role="alert" className="text-sm text-warning-700 py-6">Your employee profile does not have a recognized assessment department. Contact your administrator to update your profile.</p>}
       </div>
     </EmployeeLayout>
   );

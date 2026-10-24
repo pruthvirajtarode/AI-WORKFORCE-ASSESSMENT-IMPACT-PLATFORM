@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, ArrowRight, CheckCircle2, FileText, Send } from 'lucide-react';
 import assessmentsData from '@/data/departmentalAssessments.json';
-import { ROUTES } from '@/lib/constants';
+import { getEmployeeSessionNumber, ROUTES } from '@/lib/constants';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSessionAssessments } from '@/hooks/useSessionAssessments';
 import type { AssessmentAnswer, AssessmentPart, AssessmentQuestionSource, DepartmentalAssessment } from '@/types/departmentalAssessment';
@@ -81,7 +81,8 @@ export default function AssessmentPage() {
   const sessionNumber = Number(routeSession);
   const assessment = assessments.find((item) => item.number === sessionNumber);
   const { user } = useAuth();
-  const { attempts, isLoading, saveAnswer, submitAttempt } = useSessionAssessments(user?.id);
+  const { attempts, isLoading, saveAnswer, submitAttempt } = useSessionAssessments(user);
+  const assignedSessionNumber = getEmployeeSessionNumber(user?.departmentId, user?.departmentCode);
   const navigate = useNavigate();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, AssessmentAnswer>>({});
@@ -93,12 +94,12 @@ export default function AssessmentPage() {
   const current = prompts[currentIndex];
 
   useEffect(() => {
-    if (!isLoading && (!attempt || attempt.status === 'submitted')) {
+    if (!isLoading && (!attempt || attempt.status === 'submitted' || sessionNumber !== assignedSessionNumber)) {
       navigate(attempt?.status === 'submitted'
         ? `/employee/sessions/${sessionNumber}/result/${attempt.id}`
         : ROUTES.employeeDashboard, { replace: true });
     }
-  }, [attempt, isLoading, navigate, sessionNumber]);
+  }, [assignedSessionNumber, attempt, isLoading, navigate, sessionNumber]);
 
   useEffect(() => {
     if (attempt) setAnswers(attempt.answers);
