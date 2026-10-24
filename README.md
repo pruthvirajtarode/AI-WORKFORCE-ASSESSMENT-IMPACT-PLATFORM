@@ -96,7 +96,11 @@ Attempts are keyed by authenticated employee and session. Browser storage provid
 
 ### Supabase setup
 
-Apply `supabase/migrations/202610240001_assessment_attempts.sql` to the Supabase project, then configure `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`. Row-level security restricts each employee to their own attempts, and a unique employee/session constraint enforces one attempt per session. Demo sign-ins use per-user browser storage and do not write demo identities to Supabase.
+Apply both migrations in `supabase/migrations/` to the Supabase project, then configure `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`. The second migration links attempts to the existing employee/profile records, adds pending/evaluated result fields, enforces department-to-session matching on insert, and grants administrator-only result reads/evaluation updates through RLS. Demo sign-ins use per-user browser storage and do not write demo identities to Supabase.
+
+The admin dashboard, employee list, submission list, analytics, and employee result detail now read live Supabase data and show empty states when no records exist. Trainer evaluation is an explicit admin action because the source HTML answer keys are maintained outside this repository; the client never invents objective marks.
+
+No transactional cleanup is performed by the frontend. Before a fresh production test, an authorized Supabase administrator should review and remove only confirmed demo attempts/employees using a separately approved SQL script. The repository does not contain live Supabase credentials, so no database records were deleted during development.
 
 ---
 
