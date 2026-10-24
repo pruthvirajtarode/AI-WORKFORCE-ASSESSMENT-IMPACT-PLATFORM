@@ -58,10 +58,19 @@ export type AssessmentAnswer = string | string[] | Record<string, string>;
 export interface SessionAttempt {
   id: string;
   employeeUserId: string;
+  employeeId: string | null;
+  departmentId: string | null;
   sessionNumber: number;
+  assessmentTitle: string;
   status: 'in_progress' | 'submitted';
+  evaluationStatus: 'pending' | 'evaluated';
+  attemptNumber: number;
   startedAt: string;
   expiresAt: string;
   submittedAt: string | null;
+  maximumScore: number | null;
+  rawScore: number | null;
+  percentage: number | null;
+  timeTakenSeconds: number | null;
   answers: Record<string, AssessmentAnswer>;
 }
