@@ -77,7 +77,7 @@ export default function AdminEmployeesPage() {
       <div className="page-header flex items-start justify-between">
         <div>
           <h1 className="page-title">Employees</h1>
-          <p className="page-subtitle">{employees.length} enrolled · {filtered.length} shown</p>
+          <p className="page-subtitle">{employees.length} active profiles · {filtered.length} shown</p>
         </div>
         <button onClick={handleExport} className="btn-secondary btn-sm gap-1.5">
           <Download className="w-3.5 h-3.5" /> Export CSV
