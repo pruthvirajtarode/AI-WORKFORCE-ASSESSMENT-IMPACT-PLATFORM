@@ -28,16 +28,32 @@ function fromDatabase(row: Record<string, unknown>): SessionAttempt {
   return {
     id: String(row.id),
     employeeUserId: String(row.employee_user_id),
+    employeeId: row.employee_id ? String(row.employee_id) : null,
+    departmentId: row.department_id ? String(row.department_id) : null,
     sessionNumber: Number(row.session_number),
+    assessmentTitle: String(row.assessment_title ?? `Session ${row.session_number}`),
     status: row.status as SessionAttempt['status'],
+    evaluationStatus: row.evaluation_status === 'evaluated' ? 'evaluated' : 'pending',
+    attemptNumber: Number(row.attempt_number ?? 1),
     startedAt: String(row.started_at),
     expiresAt: String(row.expires_at),
     submittedAt: row.submitted_at ? String(row.submitted_at) : null,
+    maximumScore: typeof row.maximum_score === 'number' ? row.maximum_score : null,
+    rawScore: typeof row.raw_score === 'number' ? row.raw_score : null,
+    percentage: typeof row.percentage === 'number' ? row.percentage : null,
+    timeTakenSeconds: typeof row.time_taken_seconds === 'number' ? row.time_taken_seconds : null,
     answers: (row.answers ?? {}) as Record<string, AssessmentAnswer>,
   };
 }
 
-export function useSessionAssessments(userId: string | undefined) {
+export interface AssessmentUser {
+  id: string;
+  employeeDbId?: string;
+  departmentId?: string;
+}
+
+export function useSessionAssessments(user: AssessmentUser | null | undefined) {
+  const userId = user?.id;
   const [attempts, setAttempts] = useState<SessionAttempt[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const pendingWrites = useRef(new Map<string, ReturnType<typeof setTimeout>>());
@@ -99,8 +115,16 @@ export function useSessionAssessments(userId: string | undefined) {
     for (const timeout of pendingWrites.current.values()) clearTimeout(timeout);
   }, []);
 
-  const startAttempt = useCallback(async (sessionNumber: number, durationMinutes: number) => {
+  const startAttempt = useCallback(async (
+    sessionNumber: number,
+    durationMinutes: number,
+    assessmentTitle: string,
+    maximumScore: number,
+  ) => {
     if (!userId) throw new Error('You must be signed in to start an assessment.');
+    if (canUseSupabase(userId) && !user?.employeeDbId) {
+      throw new Error('Your employee profile is not linked. Contact your administrator before starting.');
+    }
     const previous = attempts.find((attempt) => attempt.sessionNumber === sessionNumber);
     if (previous) return previous;
 
@@ -108,11 +132,20 @@ export function useSessionAssessments(userId: string | undefined) {
     const attempt: SessionAttempt = {
       id: crypto.randomUUID(),
       employeeUserId: userId,
+      employeeId: user?.employeeDbId ?? null,
+      departmentId: user?.departmentId ?? null,
       sessionNumber,
+      assessmentTitle,
       status: 'in_progress',
+      evaluationStatus: 'pending',
+      attemptNumber: 1,
       startedAt: started.toISOString(),
       expiresAt: new Date(started.getTime() + durationMinutes * 60_000).toISOString(),
       submittedAt: null,
+      maximumScore,
+      rawScore: null,
+      percentage: null,
+      timeTakenSeconds: null,
       answers: {},
     };
 
@@ -122,10 +155,16 @@ export function useSessionAssessments(userId: string | undefined) {
         .insert({
           id: attempt.id,
           employee_user_id: userId,
+          employee_id: attempt.employeeId,
+          department_id: attempt.departmentId,
           session_number: sessionNumber,
+          assessment_title: assessmentTitle,
           status: attempt.status,
           started_at: attempt.startedAt,
           expires_at: attempt.expiresAt,
+          maximum_score: maximumScore,
+          evaluation_status: attempt.evaluationStatus,
+          attempt_number: attempt.attemptNumber,
           answers: attempt.answers,
         })
         .select('*')
@@ -148,7 +187,7 @@ export function useSessionAssessments(userId: string | undefined) {
 
     replaceAttempts([...attempts, attempt]);
     return attempt;
-  }, [attempts, replaceAttempts, userId]);
+  }, [attempts, replaceAttempts, user, userId]);
 
   const saveAnswer = useCallback((attemptId: string, questionId: string, answer: AssessmentAnswer) => {
     if (!userId) return;
@@ -184,6 +223,7 @@ export function useSessionAssessments(userId: string | undefined) {
       ...current,
       status: 'submitted',
       submittedAt: new Date().toISOString(),
+      timeTakenSeconds: Math.max(0, Math.floor((Date.now() - new Date(current.startedAt).getTime()) / 1000)),
     };
     if (canUseSupabase(userId)) {
       const { data, error } = await supabase
@@ -192,6 +232,8 @@ export function useSessionAssessments(userId: string | undefined) {
           answers: submitted.answers,
           status: submitted.status,
           submitted_at: submitted.submittedAt,
+          time_taken_seconds: submitted.timeTakenSeconds,
+          evaluation_status: submitted.evaluationStatus,
           updated_at: submitted.submittedAt,
         })
         .eq('id', attemptId)
