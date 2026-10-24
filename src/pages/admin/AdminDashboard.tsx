@@ -47,7 +47,7 @@ export default function AdminDashboard() {
         <div>
           <h1 className="page-title">Platform Overview</h1>
           <p className="page-subtitle">
-            SUROJ × BE10X · Post-Training AI Assessment Dashboard
+            SUROJ × BE10X · Department Assessment Sessions
           </p>
         </div>
         <div className="flex items-center gap-2">
