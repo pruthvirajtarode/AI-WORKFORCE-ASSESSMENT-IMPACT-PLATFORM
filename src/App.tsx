@@ -7,7 +7,7 @@ import LandingPage from '@/pages/LandingPage';
 import EmployeeLoginPage from '@/pages/EmployeeLoginPage';
 import AdminLoginPage from '@/pages/AdminLoginPage';
 import EmployeeDashboard from '@/pages/employee/EmployeeDashboard';
-import AssessmentStartPage from '@/pages/employee/AssessmentStartPage';
+import SessionDetailsPage from '@/pages/employee/SessionDetailsPage';
 import AssessmentPage from '@/pages/employee/AssessmentPage';
 import AssessmentResultPage from '@/pages/employee/AssessmentResultPage';
 import EmployeeResultsPage from '@/pages/employee/EmployeeResultsPage';
@@ -46,9 +46,9 @@ function AppRoutes() {
 
       {/* Employee */}
       <Route path={ROUTES.employeeDashboard} element={<ProtectedEmployee><EmployeeDashboard /></ProtectedEmployee>} />
-      <Route path={ROUTES.assessmentStart} element={<ProtectedEmployee><AssessmentStartPage /></ProtectedEmployee>} />
-      <Route path={ROUTES.assessment} element={<ProtectedEmployee><AssessmentPage /></ProtectedEmployee>} />
-      <Route path={ROUTES.assessmentResult} element={<ProtectedEmployee><AssessmentResultPage /></ProtectedEmployee>} />
+      <Route path={ROUTES.employeeSessionDetails} element={<ProtectedEmployee><SessionDetailsPage /></ProtectedEmployee>} />
+      <Route path={ROUTES.employeeSessionAssessment} element={<ProtectedEmployee><AssessmentPage /></ProtectedEmployee>} />
+      <Route path={ROUTES.employeeSessionResult} element={<ProtectedEmployee><AssessmentResultPage /></ProtectedEmployee>} />
       <Route path={ROUTES.employeeResults} element={<ProtectedEmployee><EmployeeResultsPage /></ProtectedEmployee>} />
 
       {/* Admin */}
