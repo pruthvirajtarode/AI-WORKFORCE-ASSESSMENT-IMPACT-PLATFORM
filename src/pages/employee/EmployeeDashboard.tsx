@@ -24,7 +24,7 @@ export default function EmployeeDashboard() {
         <p className="text-xs font-bold uppercase tracking-widest text-brand-gold mb-2">SUROJ × BE10X · Employee Portal</p>
         <h1 className="text-3xl font-bold text-brand-navy">Welcome, {user?.name?.split(' ')[0] ?? 'Colleague'}</h1>
         <h2 className="text-lg font-semibold text-brand-charcoal mt-5">Choose an Assessment Session</h2>
-        <p className="text-sm text-brand-muted mt-1">Select the department session you want to complete. Each contains a department-specific assessment.</p>
+        <p className="text-sm text-brand-muted mt-1">Your assigned department assessment session is ready to complete.</p>
       </div>
 
       <div className="grid md:grid-cols-2 gap-x-8 gap-y-0">
