@@ -63,6 +63,20 @@ export const DEPARTMENT_MAP = Object.fromEntries(
   DEPARTMENTS.map((d) => [d.id, d])
 );
 
+export const DEPARTMENT_SESSION_MAP: Record<string, number> = {
+  EPC: 1,
+  ACC: 2,
+  PAC: 3,
+  CPS: 4,
+  PRO: 5,
+  DDQ: 6,
+};
+
+export function getEmployeeSessionNumber(departmentId?: string, departmentCode?: string): number | null {
+  const code = departmentCode ?? DEPARTMENTS.find((department) => department.id === departmentId)?.code;
+  return code ? DEPARTMENT_SESSION_MAP[code] ?? null : null;
+}
+
 // ============================================================
 // COMPETENCIES
 // ============================================================
