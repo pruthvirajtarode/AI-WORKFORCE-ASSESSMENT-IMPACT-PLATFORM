@@ -21,11 +21,7 @@ Any `@surojbuildcon.com` email with password `Demo@2024` works as an employee lo
 
 ## 🎯 Purpose
 
-This platform measures whether 177 Suroj Buildcon employees have genuinely improved their ability to use AI in real, day-to-day professional work after completing a 3-day AI workshop by Be10x.
-
-- **Pre-Training Assessment** — Baseline AI readiness measurement
-- **Post-Training Assessment** — Impact measurement and improvement tracking
-- **Admin Analytics Portal** — Department-level insights, competency analysis, readiness distribution
+The employee portal provides six separate, department-specific assessment sessions from the six source HTML files in the project root. Employees sign in, select a session, review its instructions and start only that session. Each session is a one-attempt, 30-minute assessment; progress is saved per employee and session.
 
 ---
 
@@ -61,7 +57,7 @@ src/
 │       ├── other-depts.ts  # CPS, PRO, DDQ
 │       └── practical.ts    # Practical scenario supplements
 ├── hooks/
-│   ├── useLocalAssessment.ts  # Offline-capable assessment engine
+│   ├── useSessionAssessments.ts # Session attempts, local recovery and Supabase persistence
 │   └── useAdminData.ts        # Mock analytics data generator
 ├── lib/
 │   ├── constants.ts   # Departments, routes, assessment config
@@ -92,19 +88,15 @@ src/
 
 ---
 
-## 🧠 Assessment Engine
+## 🧠 Department Sessions
 
-- **30 questions per session**, 90-minute time limit
-- Question types: MCQ, Multi-select, Short Answer, Long Answer, Scenario, Prompt Writing, Workflow Design, Output Evaluation, Document Analysis, Data Analysis
-- **Department-specific question pools** for 6 departments:
-  - EPC Bids & Design-Build / Tendering & Contracts
-  - Accounts & Finance
-  - People, Admin & Communication
-  - Cost, Planning & Systems
-  - Procurement & Stores
-  - Design, Drawings & Quantities
-- Competency scoring across 10 AI readiness dimensions
-- Offline-capable via `localStorage` — works without Supabase for demo
+The original assessment HTML files are authoritative. `npm run dev` and `npm run build` extract their assessment titles, section briefs, questions, options, IDs, optional/manual markers, scoring identifiers and source timer into `src/data/departmentalAssessments.json`; do not edit that generated file by hand. The source files intentionally keep trainer answer keys in their external trainer-only store, so answer keys are not bundled into the employee app.
+
+Attempts are keyed by authenticated employee and session. Browser storage provides immediate draft recovery; authenticated Supabase users also save answers and submission status to `public.assessment_attempts`.
+
+### Supabase setup
+
+Apply `supabase/migrations/202610240001_assessment_attempts.sql` to the Supabase project, then configure `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`. Row-level security restricts each employee to their own attempts, and a unique employee/session constraint enforces one attempt per session. Demo sign-ins use per-user browser storage and do not write demo identities to Supabase.
 
 ---
 

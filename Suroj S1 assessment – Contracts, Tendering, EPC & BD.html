@@ -1,0 +1,560 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Session 1 assessment – Contracts, Tendering, EPC & BD</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Serif:ital,wght@1,400&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F2EEE4;--card:#FBF8F2;--ink:#1E1B16;--muted:#655E52;--line:#D8D0BF;
+  --rust:#9C3F22;--rust-soft:#F1DFD5;--navy:#2B3A55;--olive:#4F6131;--olive-soft:#E4E9D6;
+  --bad:#A12A1D;--bad-soft:#F6DCD7;--field:#FFFFFF;
+  color-scheme:light;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#181613;--card:#221F1B;--ink:#EDE7DB;--muted:#A69E90;--line:#3A352D;
+    --rust:#E3825E;--rust-soft:#3A2419;--navy:#9DB0D3;--olive:#A9BE7E;--olive-soft:#262C1C;
+    --bad:#F08A7C;--bad-soft:#3A1E1A;--field:#1B1916;color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#181613;--card:#221F1B;--ink:#EDE7DB;--muted:#A69E90;--line:#3A352D;
+  --rust:#E3825E;--rust-soft:#3A2419;--navy:#9DB0D3;--olive:#A9BE7E;--olive-soft:#262C1C;
+  --bad:#F08A7C;--bad-soft:#3A1E1A;--field:#1B1916;color-scheme:dark;
+}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:calc(env(safe-area-inset-top,0px) + 80px)}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 "IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--card)}
+.wrap{max-width:860px;margin:0 auto;padding:0 20px 80px}
+h1,h2,h3{line-height:1.2;margin:0}
+a{color:var(--navy)}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--navy);outline-offset:2px}
+
+/* top bar */
+.bar{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--card);border-bottom:1px solid var(--line)}
+.bar-in{max-width:860px;margin:0 auto;padding:10px 20px;display:flex;gap:16px;align-items:center;justify-content:space-between}
+.bar-title{font-weight:600;font-size:14px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.clock{font:500 22px/1 "IBM Plex Mono",ui-monospace,monospace;font-variant-numeric:tabular-nums;color:var(--ink)}
+.clock.low{color:var(--bad)}
+.fuse{height:4px;background:var(--rust);transform-origin:left;transition:transform 1s linear}
+.tabs{display:flex;gap:4px}
+.tab{border:1px solid var(--line);background:transparent;border-radius:6px;padding:6px 12px;font-size:14px;cursor:pointer}
+.tab[aria-selected="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+
+/* hero */
+.hero{padding:44px 0 28px;border-bottom:2px solid var(--ink);margin-bottom:28px}
+.hero h1{font-size:clamp(30px,5vw,44px);font-weight:700;letter-spacing:-.01em;max-width:18ch}
+.hero p.lede{font:italic 400 19px/1.6 "IBM Plex Serif",Georgia,serif;color:var(--muted);max-width:60ch;margin:14px 0 0}
+.facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:0;margin-top:26px;border:1px solid var(--line);background:var(--card)}
+.facts div{padding:12px 14px;border-right:1px solid var(--line)}
+.facts div:last-child{border-right:0}
+.facts b{display:block;font-size:20px}
+.facts span{font-size:13px;color:var(--muted)}
+
+.start{background:var(--card);border:1px solid var(--line);padding:22px;margin-bottom:28px}
+.start label{display:block;font-weight:600;margin-bottom:6px}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+input[type=text],input[type=number],input[type=url],select,textarea{background:var(--field);border:1px solid var(--line);border-radius:4px;padding:9px 11px;width:100%}
+textarea{min-height:110px;resize:vertical;line-height:1.45}
+.btn{background:var(--rust);color:#fff;border:0;border-radius:4px;padding:11px 20px;font-weight:600;cursor:pointer}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
+.note{font-size:14px;color:var(--muted)}
+
+/* sections */
+section.part{margin:0 0 40px}
+.part-head{display:grid;grid-template-columns:auto 1fr auto;gap:14px;align-items:baseline;border-top:1px solid var(--ink);padding-top:14px;margin-bottom:14px}
+.part-letter{font:600 15px/1 "IBM Plex Mono",monospace;background:var(--ink);color:var(--bg);padding:6px 9px;border-radius:3px}
+.part-head h2{font-size:22px}
+.part-meta{font-size:13px;color:var(--muted);white-space:nowrap}
+.brief{background:var(--card);border-left:4px solid var(--navy);padding:14px 16px;margin-bottom:18px}
+.brief p{margin:0 0 8px}.brief p:last-child{margin:0}
+.files{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.files code{font:13px "IBM Plex Mono",monospace;background:var(--bg);border:1px solid var(--line);padding:2px 7px;border-radius:3px}
+
+.q{background:var(--card);border:1px solid var(--line);padding:16px 18px;margin-bottom:12px}
+.q-top{display:flex;justify-content:space-between;gap:12px;margin-bottom:10px}
+.q-text{font-weight:500}
+.q-id{font:12px "IBM Plex Mono",monospace;color:var(--muted);white-space:nowrap}
+.opts{display:grid;gap:6px}
+.opt{display:flex;gap:10px;align-items:flex-start;padding:8px 10px;border:1px solid var(--line);border-radius:4px;cursor:pointer;background:var(--bg)}
+.opt:has(input:checked){border-color:var(--rust);background:var(--rust-soft)}
+.opt input{margin-top:4px;accent-color:var(--rust)}
+.unit{display:flex;align-items:center;gap:8px;max-width:280px}
+.unit span{font-size:14px;color:var(--muted);white-space:nowrap}
+.cw{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;padding:10px 0;border-top:1px solid var(--line)}
+.cw:first-of-type{border-top:0}
+.seg{display:flex;border:1px solid var(--line);border-radius:4px;overflow:hidden}
+.seg label{padding:6px 12px;cursor:pointer;font-size:14px}
+.seg input{position:absolute;opacity:0;pointer-events:none}
+.seg label:has(input:checked){background:var(--ink);color:var(--bg)}
+.seg label:has(input:focus-visible){outline:3px solid var(--navy);outline-offset:-3px}
+.aiq{font:15px/1.5 "IBM Plex Mono",monospace}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.grid2 label,.field label{font-size:13px;font-weight:600;display:block;margin-bottom:4px}
+.field{margin-top:10px}
+
+.submit-box{border:2px solid var(--ink);padding:20px;background:var(--card)}
+.done{background:var(--olive-soft);border:1px solid var(--olive);padding:16px;margin-bottom:24px}
+.err{background:var(--bad-soft);border:1px solid var(--bad);padding:12px 14px;margin-top:12px}
+
+/* results */
+.tbl-wrap{overflow-x:auto;border:1px solid var(--line);background:var(--card)}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{padding:9px 10px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+th{font-weight:600;background:var(--bg);white-space:nowrap}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+td input[type=number]{width:64px;padding:4px 6px}
+.ok{color:var(--olive);font-weight:600}.no{color:var(--bad);font-weight:600}
+.detail{background:var(--bg);padding:14px}
+.detail pre{white-space:pre-wrap;font:13px/1.5 "IBM Plex Mono",monospace;margin:4px 0 10px;background:var(--card);border:1px solid var(--line);padding:8px}
+.stat-bar{height:8px;background:var(--line);border-radius:4px;overflow:hidden;min-width:80px}
+.stat-bar i{display:block;height:100%;background:var(--olive)}
+.key-item{border-top:1px solid var(--line);padding:12px 0}
+.key-item b{color:var(--olive)}
+.hidden{display:none!important}
+@media (max-width:620px){
+  .grid2{grid-template-columns:1fr}
+  .part-head{grid-template-columns:auto 1fr}
+  .part-meta{grid-column:1/-1}
+  .bar-title{display:none}
+  .cw{grid-template-columns:1fr}
+}
+@media (prefers-reduced-motion:reduce){.fuse{transition:none}}
+</style>
+</head>
+<body>
+<header class="bar">
+  <div class="bar-in">
+    <div class="bar-title">Suroj Buildcon × Be10x · Session 1 assessment</div>
+    <div class="tabs hidden" id="tabs" role="tablist">
+      <button class="tab" role="tab" aria-selected="true" data-view="take">Assessment</button>
+      <button class="tab" role="tab" aria-selected="false" data-view="results">Results <span id="rcount"></span></button>
+      <button class="tab" role="tab" aria-selected="false" data-view="key">Answer key</button>
+    </div>
+    <div class="clock" id="clock" aria-live="off">30:00</div>
+  </div>
+  <div class="fuse" id="fuse"></div>
+</header>
+
+<main class="wrap">
+<!-- ============ TAKE ============ -->
+<div id="view-take">
+  <div class="hero">
+    <h1>Contracts, Tendering, EPC & BD: can you do it without us in the room?</h1>
+    <p class="lede">Thirty minutes. The same synthetic KLS tender and Suroj files from the workshop, but new questions. Use your AI app for the practical parts – and check what it tells you before you type an answer here.</p>
+    <div class="facts">
+      <div><b>30 min</b><span>timer starts when you press Start</span></div>
+      <div><b>6 parts</b><span>A to F, do them in order</span></div>
+      <div><b>33 marks</b><span>26 auto-scored, 7 marked by the trainer</span></div>
+      <div><b>08-Oct-2026</b><span>treat this as “today” in every question</span></div>
+    </div>
+  </div>
+
+  <div id="done-banner" class="done hidden"></div>
+
+  <div class="start" id="start-box">
+    <label for="pname">Your name</label>
+    <div class="row">
+      <input type="text" id="pname" autocomplete="name" placeholder="As it should appear on the results sheet" style="flex:1;min-width:220px">
+      <select id="pteam" style="width:auto" aria-label="Your team">
+        <option value="">Your team</option>
+        <option>Tendering</option><option>Contracts</option><option>EPC</option><option>Business Development</option>
+      </select>
+      <button class="btn" id="startBtn">Start the 30 minutes</button>
+    </div>
+    <p class="note" style="margin:10px 0 0">Your answers save on this device as you go. Nothing reaches the trainer until you press Submit at the end.</p>
+  </div>
+
+  <form id="quiz" class="hidden" onsubmit="return false"></form>
+</div>
+
+<!-- ============ RESULTS ============ -->
+<div id="view-results" class="hidden">
+  <div class="hero" style="padding-top:32px">
+    <h1 style="max-width:none">Results</h1>
+    <p class="lede">Auto marks are computed from the answer key. Enter the two trainer-marked scores per person; they save as you type.</p>
+  </div>
+  <div class="row" style="margin-bottom:14px;justify-content:space-between">
+    <span class="note" id="res-summary">Loading…</span>
+    <button class="btn ghost" id="exportBtn">Download results (CSV)</button>
+  </div>
+  <div class="tbl-wrap"><table id="res-table"></table></div>
+  <h2 style="font-size:20px;margin:34px 0 12px">Where the room went wrong</h2>
+  <p class="note" style="margin-top:0">Share of submissions answering each auto-marked question correctly, lowest first. Start the debrief at the top.</p>
+  <div class="tbl-wrap"><table id="stat-table"></table></div>
+</div>
+
+<!-- ============ KEY ============ -->
+<div id="view-key" class="hidden">
+  <div class="hero" style="padding-top:32px">
+    <h1 style="max-width:none">Answer key</h1>
+    <p class="lede">Visible only to you and other editors of this page. Use it for the debrief.</p>
+  </div>
+  <div id="key-body"><p class="note">Loading…</p></div>
+</div>
+</main>
+
+<script>
+/* ---------------- Question bank (no answers here) ---------------- */
+const PARTS = [
+ {id:"A",title:"Prompting and judgement",mins:5,
+  brief:`<p>No files needed. Pick one answer per question.</p>`,
+  qs:[
+   {id:"A1",type:"choice",text:"Your prompt for the tender keeps returning clause numbers that don’t exist. Which part of the prompt fixes this most directly?",
+    opts:{a:"Role – “You are a senior tender engineer”",b:"Format – “Give the answer as a table”",c:"Evidence – “Quote the clause number for every point, or write NOT FOUND”",d:"More context – paste the whole tender twice"}},
+   {id:"A2",type:"choice",text:"Which of these is agentic AI rather than generative AI?",
+    opts:{a:"You paste the SCC and AI writes a one-page summary",b:"AI turns your rough notes into an Annexure-Q table",c:"AI opens the pipeline sheet, finds bids with validity running out, drafts an extension letter for each client and waits for your approval before sending",d:"AI explains what an EMD is"}},
+   {id:"A3",type:"choice",text:"Use it, check it, or don’t: “Decide whether Suroj should bid on KLS/041.”",
+    opts:{a:"Use – AI has read the whole tender",b:"Check – accept AI’s verdict after a quick review",c:"Don’t – AI prepares the evidence table; the bid committee makes the call"}},
+   {id:"A4",type:"choice",text:"AI tells you your 29-line BOQ draft totals ₹37.7 crore. What do you do?",
+    opts:{a:"Accept it – adding up is easy for AI",b:"Have the total computed with a formula or code (e.g. =SUM in the sheet) and compare",c:"Ask the same question three times and take the average"}},
+   {id:"A5",type:"choice",text:"The NIT says bids are due 28-Oct; the ITB says 30-Oct. Clause 2.7 (order of precedence) lists LoA, SCC, GCC, Specs, Drawings, BOQ. What’s the right move?",
+    opts:{a:"Plan for 30-Oct – the ITB is the more detailed section",b:"Plan for 28-Oct and raise a pre-bid query asking the Employer to confirm – 2.7 doesn’t rank the NIT or ITB",c:"Apply 2.7 – the later clause number wins",d:"Ignore it – the portal will show the right date"}},
+   {id:"A6",type:"choice",text:"On Monday a real client tender arrives. Where may you upload it?",
+    opts:{a:"Any free AI app, as long as you delete the chat afterwards",b:"Only the company-approved AI account",c:"Your personal paid AI account",d:"Nowhere – AI must never be used on tenders"}}
+  ]},
+ {id:"B",title:"Re-qualify after an addendum",mins:6,
+  brief:`<p><b>Addendum 1 (fictional, for this assessment only):</b> the estimated cost in Clause 1.2 is revised from ₹48 crore to <b>₹60 crore</b>. Every eligibility clause in Section 3 stays word-for-word the same.</p><p>Re-run the eligibility check with AI. Make it show the thresholds it used.</p><div class="files"><code>KLS_Tender_EPC_041_SYNTHETIC.pdf</code><code>4_Capability_Projects.csv</code><code>4b_Capability_Profile.csv</code></div>`,
+  qs:[
+   {id:"B1",type:"multi",text:"Which Suroj projects count as ‘similar work’ under Clause 3.2 at all, ignoring value? Tick every one that counts.",
+    opts:{"PR-07":"PR-07 Pharma API Block, ₹41.2 cr","PR-11":"PR-11 OSD formulation facility, ₹27.6 cr","PR-15":"PR-15 Biotech manufacturing plant, ₹25.1 cr","PR-18":"PR-18 Pharma finished-goods warehouse, ₹23.9 cr","PR-21":"PR-21 Vaccine filling block, ₹44.0 cr"}},
+   {id:"B2",type:"choice",text:"At ₹60 crore, what is the bid decision on eligibility?",
+    opts:{"GO":"GO","GWA":"GO-WITH-ACTIONS","NOGO":"NO-GO"}},
+   {id:"B3",type:"num",unit:"₹ crore",text:"What is the highest estimated cost at which Suroj would still clear Clause 3.2 through route (b) – two similar works each ≥ 50%?"},
+   {id:"B4",type:"num",unit:"₹ lakh",text:"Under ITB Clause 2.5, what EMD would a ₹60 crore estimate require?"}
+  ]},
+ {id:"C",title:"Put a number on the SCC",mins:7,
+  brief:`<p>Back to the original tender. Assume the Contract Price is exactly <b>₹48 crore</b> and RA bills over the job add up to the full ₹48 crore. Give money in ₹ crore to two decimals.</p><div class="files"><code>KLS_Tender_EPC_041_SYNTHETIC.pdf</code> Sections 6–7<code>1_Tender_Clauses.csv</code></div>`,
+  qs:[
+   {id:"C1",type:"num",unit:"₹ crore",text:"Suroj finishes 6 weeks late. Liquidated damages under the GCC as originally written?"},
+   {id:"C2",type:"num",unit:"₹ crore",text:"Same 6-week delay. Liquidated damages under the SCC?"},
+   {id:"C3",type:"num",unit:"₹ crore",text:"The most LD the SCC can ever take from Suroj on this job?"},
+   {id:"C4",type:"num",unit:"days",text:"Under the SCC, the longest the contract allows from submitting an RA bill to getting paid?"},
+   {id:"C5",type:"num",unit:"₹ crore",text:"Under the SCC, retention the Employer is still holding on the day of completion?"},
+   {id:"C6",type:"choice",text:"Which SCC clause reads like a change to the GCC but isn’t one?",opts:{"7.5":"7.5 Payment","7.9":"7.9 Mobilisation advance","7.10":"7.10 Performance security","7.12":"7.12 Termination for convenience"}},
+   {id:"C7",type:"choice",text:"SCC 7.13 quietly takes away a right the GCC gave Suroj. Which GCC clause?",opts:{"6.10":"6.10 Performance security","6.14":"6.14 Extension of time","6.22":"6.22 Limitation of liability","6.27":"6.27 Dispute resolution"}}
+  ]},
+ {id:"D",title:"Pipeline dashboard",mins:8,
+  brief:`<p>Upload the pipeline register to your AI app and ask it to <b>clean it and build a dashboard</b> the BD head could read in two minutes. Then read the answers off your dashboard. If a number looks off, ask the AI how it got it.</p><p>Today is 08-Oct-2026. “Validity” runs from the bid due date for the number of days in <code>Bid_Validity_Days</code>.</p><div class="files"><code>5_Tender_Pipeline.csv</code></div>`,
+  qs:[
+   {id:"D1",type:"num",unit:"rows",text:"How many rows are exact duplicates that should be removed?"},
+   {id:"D2",type:"num",unit:"₹ lakh",text:"Total EMD still not returned on bids that were Lost or Withdrawn?"},
+   {id:"D3",type:"num",unit:"bids",text:"How many ‘Submitted’ bids have already passed their bid validity?"},
+   {id:"D4",type:"text",short:true,text:"Which Tender ID’s bid validity runs out tomorrow (09-Oct)?",ph:"e.g. TN000"},
+   {id:"D5",type:"choice",text:"Which estimator is overloaded with bids due 26–29 Oct, including KLS/041?",opts:{E1:"E1",E2:"E2",E3:"E3",E4:"E4",E5:"E5",E6:"E6"}},
+   {id:"D6",type:"choice",text:"Which sector has zero wins and the widest average gap above L1 on lost bids?",opts:{"Automobile":"Automobile","Chemical":"Chemical","Data centre":"Data centre","Warehousing":"Warehousing"}},
+   {id:"D7",type:"text",short:true,url:true,optional:true,text:"Link to your dashboard, if your AI app gives you one (optional).",ph:"https://…"},
+   {id:"D8",type:"text",manual:true,text:"Paste the exact prompt you used to build the dashboard. (Trainer-marked, 3 marks: role, context, format, evidence/constraints.)",ph:"Paste your prompt here"}
+  ]},
+ {id:"E",title:"Check the AI",mins:2,
+  brief:`<p>A colleague ran Lab 1 on the original ₹48 crore tender and pasted this AI output into the bid file. Mark each line Correct or Wrong.</p>`,
+  qs:[
+   {id:"E",type:"cw",text:"AI output",items:{
+     e1:"PR-07 Pharma API Block (₹41.2 cr) qualifies alone under Cl. 3.2(a) because it is above 80% of ₹48 cr.",
+     e2:"Average turnover is well above the ₹40 cr needed under Cl. 3.1.",
+     e3:"ISO 45001, valid till 15-Oct-2026, satisfies Cl. 3.5.",
+     e4:"The ₹35 cr solvency certificate issued 12-Mar-2026 satisfies Cl. 3.6.",
+     e5:"PR-11 has 1,800 sqm of Grade C/D cleanroom, which meets Cl. 3.3.",
+     e6:"Retention on this contract is 5% of each RA bill (Cl. 6.16)."}}
+  ]},
+ {id:"F",title:"Write the pre-bid query",mins:2,
+  brief:`<p>Queries close today at 17:00. Write the Annexure-Q row for the 28-Oct vs 30-Oct submission date conflict. (Trainer-marked, 4 marks.)</p>`,
+  qs:[{id:"F",type:"annexq",manual:true,text:"Annexure-Q row"}]}
+];
+
+/* ---------------- helpers ---------------- */
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const LS = "suroj-s1-assess-v1";
+const DURATION = 30*60*1000;
+let state = {name:"",team:"",startedAt:null,ans:{},submittedAt:null};
+try{ const s = JSON.parse(localStorage.getItem(LS)||"null"); if(s) state = Object.assign(state,s); }catch(e){}
+const save = () => { try{ localStorage.setItem(LS, JSON.stringify(state)); }catch(e){} };
+
+/* ---------------- render quiz ---------------- */
+function renderQuiz(){
+  const f = $("#quiz"); let h = "";
+  for(const p of PARTS){
+    h += `<section class="part" id="part-${p.id}"><div class="part-head"><span class="part-letter">${p.id}</span><h2>${esc(p.title)}</h2><span class="part-meta">about ${p.mins} min</span></div><div class="brief">${p.brief}</div>`;
+    for(const q of p.qs){
+      const v = state.ans;
+      if(q.type==="cw"){
+        h += `<div class="q"><div class="q-top"><div class="q-text">${esc(q.text)}</div><span class="q-id">E · 6 × ½ mark</span></div>`;
+        for(const [k,t] of Object.entries(q.items)){
+          h += `<div class="cw"><div class="aiq">“${esc(t)}”</div><div class="seg" role="radiogroup" aria-label="${esc(t)}">
+            <label><input type="radio" name="${k}" value="C" ${v[k]==="C"?"checked":""}>Correct</label>
+            <label><input type="radio" name="${k}" value="W" ${v[k]==="W"?"checked":""}>Wrong</label></div></div>`;
+        }
+        h += `</div>`; continue;
+      }
+      if(q.type==="annexq"){
+        const a = v.F || {};
+        h += `<div class="q"><div class="q-top"><div class="q-text">Annexure-Q row (columns as in Clause 5.2)</div><span class="q-id">F · 4 marks</span></div>
+          <div class="grid2">
+            <div><label for="F_sec">Tender section</label><input type="text" id="F_sec" data-f="sec" value="${esc(a.sec)}"></div>
+            <div><label for="F_cl">Clause no.</label><input type="text" id="F_cl" data-f="cl" value="${esc(a.cl)}"></div>
+            <div><label for="F_pg">Page no.</label><input type="text" id="F_pg" data-f="pg" value="${esc(a.pg)}"></div>
+          </div>
+          <div class="field"><label for="F_quote">Existing clause (quote)</label><textarea id="F_quote" data-f="quote" style="min-height:70px">${esc(a.quote)}</textarea></div>
+          <div class="field"><label for="F_query">Query / clarification sought</label><textarea id="F_query" data-f="query" style="min-height:70px">${esc(a.query)}</textarea></div>
+          <div class="field"><label for="F_chg">Bidder’s proposed change</label><textarea id="F_chg" data-f="chg" style="min-height:60px">${esc(a.chg)}</textarea></div></div>`;
+        continue;
+      }
+      h += `<div class="q"><div class="q-top"><div class="q-text">${esc(q.text)}</div><span class="q-id">${q.id}${q.manual?" · trainer":""}${q.optional?" · optional":""}</span></div>`;
+      if(q.type==="choice"||q.type==="multi"){
+        const it = q.type==="choice"?"radio":"checkbox";
+        h += `<div class="opts">`;
+        for(const [k,t] of Object.entries(q.opts)){
+          const chk = q.type==="choice" ? v[q.id]===k : (v[q.id]||[]).includes(k);
+          h += `<label class="opt"><input type="${it}" name="${q.id}" value="${esc(k)}" ${chk?"checked":""}><span>${esc(t)}</span></label>`;
+        }
+        if(q.type==="multi") h += `<label class="opt"><input type="checkbox" name="${q.id}" value="NONE" ${(v[q.id]||[]).includes("NONE")?"checked":""}><span>None of these</span></label>`;
+        h += `</div>`;
+      } else if(q.type==="num"){
+        h += `<div class="unit"><input type="number" step="any" inputmode="decimal" name="${q.id}" aria-label="${q.id} answer" value="${esc(v[q.id])}"><span>${esc(q.unit)}</span></div>`;
+      } else if(q.type==="text"){
+        h += q.short ? `<input type="${q.url?"url":"text"}" name="${q.id}" placeholder="${esc(q.ph||"")}" aria-label="${q.id} answer" value="${esc(v[q.id])}" style="max-width:${q.url?"100%":"240px"}">`
+                     : `<textarea name="${q.id}" placeholder="${esc(q.ph||"")}" aria-label="${q.id} answer">${esc(v[q.id])}</textarea>`;
+      }
+      h += `</div>`;
+    }
+    h += `</section>`;
+  }
+  h += `<div class="submit-box"><h2 style="font-size:20px;margin-bottom:6px">Submit to the trainer</h2>
+    <p class="note" id="unanswered" style="margin:0 0 12px"></p>
+    <button class="btn" id="submitBtn" type="button">Submit my answers</button>
+    <div id="submit-msg"></div></div>`;
+  f.innerHTML = h;
+  f.addEventListener("input", onInput); f.addEventListener("change", onInput);
+  $("#submitBtn").addEventListener("click", submit);
+  updateUnanswered();
+}
+function onInput(e){
+  const el = e.target; if(state.submittedAt) return;
+  if(el.dataset.f){ state.ans.F = state.ans.F||{}; state.ans.F[el.dataset.f] = el.value; }
+  else if(el.type==="checkbox"){
+    let arr = [...document.querySelectorAll(`input[name="${el.name}"]:checked`)].map(x=>x.value);
+    if(el.value==="NONE" && el.checked){ arr=["NONE"]; document.querySelectorAll(`input[name="${el.name}"]`).forEach(x=>x.checked=x.value==="NONE"); }
+    else if(el.checked && arr.includes("NONE")){ arr=arr.filter(x=>x!=="NONE"); document.querySelector(`input[name="${el.name}"][value="NONE"]`).checked=false; }
+    state.ans[el.name]=arr;
+  } else if(el.name){ state.ans[el.name] = el.value; }
+  save(); updateUnanswered();
+}
+function requiredIds(){
+  const ids=[];
+  for(const p of PARTS) for(const q of p.qs){
+    if(q.type==="cw") ids.push(...Object.keys(q.items));
+    else if(q.type==="annexq") ids.push("F");
+    else if(!q.optional) ids.push(q.id);
+  }
+  return ids;
+}
+function isBlank(id){
+  const v=state.ans[id];
+  if(id==="F") return !v || !Object.values(v).some(x=>String(x||"").trim());
+  return v==null || (Array.isArray(v)?v.length===0:String(v).trim()==="");
+}
+function updateUnanswered(){
+  const miss = requiredIds().filter(isBlank);
+  const el=$("#unanswered"); if(!el) return;
+  el.textContent = miss.length ? `${miss.length} question${miss.length>1?"s":""} still blank: ${miss.join(", ")}. You can still submit.` : "Everything is answered.";
+}
+
+/* ---------------- timer ---------------- */
+let tick;
+function startTimer(){
+  clearInterval(tick);
+  const run=()=>{
+    const left = Math.max(0, state.startedAt + DURATION - Date.now());
+    const m=Math.floor(left/60000), s=Math.floor(left%60000/1000);
+    const c=$("#clock"); c.textContent=`${String(m).padStart(2,"0")}:${String(s).padStart(2,"0")}`;
+    c.classList.toggle("low", left<5*60000);
+    $("#fuse").style.transform=`scaleX(${left/DURATION})`;
+    if(left===0){ clearInterval(tick); c.textContent="Time’s up"; }
+  };
+  run(); tick=setInterval(run,1000);
+}
+
+/* ---------------- runtime ---------------- */
+let db=null, user=null, uid=null, isEditor=false, KEY=null;
+async function initRuntime(){
+  if(!window.claude || !window.claude.use) return;
+  try{ db = await window.claude.use("db"); }catch(e){ db=null; }
+  try{ user = await window.claude.use("user"); }catch(e){ user=null; }
+  try{ uid = user ? await user.id() : null; }catch(e){ uid=null; }
+  try{ isEditor = user ? !!(await user.canEdit()) : false; }catch(e){ isEditor=false; }
+  if(db && uid && !state.submittedAt){
+    try{ const snap = await db.doc("submissions/"+uid).get(); if(snap.exists){ const d=snap.data(); state.submittedAt=d.submittedAt; state.name=d.name; save(); showSubmitted(); } }catch(e){}
+  }
+  if(isEditor && db){
+    $("#tabs").classList.remove("hidden");
+    try{ const k = await db.doc("config/key").get(); KEY = k.exists ? k.data() : null; }catch(e){ KEY=null; }
+    renderKey(); watchResults();
+  }
+}
+
+/* ---------------- start / submit ---------------- */
+$("#pname").value = state.name||""; $("#pteam").value = state.team||"";
+$("#startBtn").addEventListener("click", ()=>{
+  const n=$("#pname").value.trim();
+  if(!n){ $("#pname").focus(); $("#pname").setAttribute("aria-invalid","true"); return; }
+  state.name=n; state.team=$("#pteam").value; if(!state.startedAt) state.startedAt=Date.now(); save(); begin();
+});
+function begin(){
+  $("#start-box").classList.add("hidden");
+  $("#quiz").classList.remove("hidden");
+  renderQuiz(); startTimer();
+  if(state.submittedAt) showSubmitted();
+}
+async function submit(){
+  const msg=$("#submit-msg"); msg.innerHTML="";
+  if(!db || !uid){
+    msg.innerHTML=`<div class="err">This page can’t reach the results store from here. Make sure you opened the link the trainer shared while signed in to Claude, then try again. Your answers are kept on this device.</div>`;
+    return;
+  }
+  const btn=$("#submitBtn"); btn.disabled=true; btn.textContent="Submitting…";
+  const doc={name:state.name,team:state.team||"",startedAt:state.startedAt,submittedAt:Date.now(),
+    minutes:Math.round((Date.now()-state.startedAt)/60000),answers:state.ans};
+  try{
+    await db.doc("submissions/"+uid).set(doc);
+    state.submittedAt=doc.submittedAt; save(); showSubmitted();
+  }catch(e){
+    if(e && e.code==="unavailable"){ setTimeout(submit, 800+Math.random()*800); return; }
+    btn.disabled=false; btn.textContent="Submit my answers";
+    msg.innerHTML=`<div class="err">Submission was refused (${esc(e&&e.code||"error")}). You may only have view access – ask the trainer to give you Contributor access, then press Submit again.</div>`;
+  }
+}
+function showSubmitted(){
+  const b=$("#done-banner"); b.classList.remove("hidden");
+  const t=new Date(state.submittedAt).toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"});
+  b.innerHTML=`<b>Submitted at ${esc(t)}.</b> The trainer has your answers. Results and the walkthrough come in the debrief.`;
+  document.querySelectorAll("#quiz input,#quiz textarea,#quiz select").forEach(x=>x.disabled=true);
+  const btn=$("#submitBtn"); if(btn){ btn.disabled=true; btn.textContent="Submitted"; }
+  clearInterval(tick); $("#clock").textContent="Done";
+}
+
+/* ---------------- grading (editors only, key from db) ---------------- */
+const AUTO = ["A1","A2","A3","A4","A5","A6","B1","B2","B3","B4","C1","C2","C3","C4","C5","C6","C7","D1","D2","D3","D4","D5","D6","e1","e2","e3","e4","e5","e6"];
+function weight(id){ return /^e\d$/.test(id) ? 0.5 : 1; }
+function correct(id, a){
+  const k = KEY && KEY.answers && KEY.answers[id]; if(!k) return false;
+  const v = a[id];
+  if(k.t==="choice") return v===k.v;
+  if(k.t==="multi"){ const s=[...(v||[])].sort().join("|"); return s===[...k.v].sort().join("|"); }
+  if(k.t==="num"){ const n=parseFloat(String(v??"").replace(/,/g,"")); return !isNaN(n) && n>=k.min && n<=k.max; }
+  if(k.t==="text"){ const n=String(v||"").trim().toUpperCase().replace(/\s+/g,""); return k.v.map(x=>x.toUpperCase()).includes(n); }
+  return false;
+}
+function autoScore(a){ return AUTO.reduce((s,id)=>s+(correct(id,a)?weight(id):0),0); }
+const AUTO_MAX = AUTO.reduce((s,id)=>s+weight(id),0);
+
+let SUBS={}, MARKS={}, openRow=null;
+function watchResults(){
+  db.collection("submissions").onSnapshot(qs=>{
+    SUBS={}; qs.docs.forEach(d=>SUBS[d.id]=d.data()); drawResults();
+  }, err=>{ $("#res-summary").textContent="Couldn’t load submissions ("+(err&&err.code)+")."; });
+  db.collection("marks").onSnapshot(qs=>{ MARKS={}; qs.docs.forEach(d=>MARKS[d.id]=d.data()); drawResults(); }, ()=>{});
+}
+function drawResults(){
+  const ids=Object.keys(SUBS);
+  $("#rcount").textContent = ids.length ? `(${ids.length})` : "";
+  if(!KEY){ $("#res-summary").textContent="Answer key not found in the results store, so auto marks can’t be computed."; }
+  const rows = ids.map(id=>{ const s=SUBS[id], a=s.answers||{}, m=MARKS[id]||{};
+    const au=autoScore(a), man=(+m.prompt||0)+(+m.query||0);
+    return {id,s,au,m,total:au+man}; }).sort((x,y)=>y.total-x.total);
+  if(KEY){
+    const avg = rows.length ? (rows.reduce((t,r)=>t+r.au,0)/rows.length) : 0;
+    $("#res-summary").textContent = rows.length ? `${rows.length} submitted · average auto score ${avg.toFixed(1)} / ${AUTO_MAX}` : "No submissions yet. They appear here live.";
+  }
+  let h=`<thead><tr><th>Name</th><th>Team</th><th class="num">Auto /${AUTO_MAX}</th><th class="num">Prompt /3</th><th class="num">Query /4</th><th class="num">Total /${AUTO_MAX+7}</th><th class="num">Minutes</th><th></th></tr></thead><tbody>`;
+  for(const r of rows){
+    h+=`<tr><td>${esc(r.s.name)}</td><td>${esc(r.s.team)}</td><td class="num">${r.au}</td>
+      <td class="num"><input type="number" min="0" max="3" step="0.5" data-mark="prompt" data-id="${r.id}" value="${esc(r.m.prompt??"")}" aria-label="Prompt mark for ${esc(r.s.name)}"></td>
+      <td class="num"><input type="number" min="0" max="4" step="0.5" data-mark="query" data-id="${r.id}" value="${esc(r.m.query??"")}" aria-label="Query mark for ${esc(r.s.name)}"></td>
+      <td class="num"><b>${r.total}</b></td><td class="num">${esc(r.s.minutes)}</td>
+      <td><button class="btn ghost" style="padding:4px 10px" data-open="${r.id}">${openRow===r.id?"Hide":"Answers"}</button></td></tr>`;
+    if(openRow===r.id) h+=`<tr><td colspan="8" class="detail">${detail(r.s.answers||{})}</td></tr>`;
+  }
+  h+=`</tbody>`;
+  const t=$("#res-table"); 
+  const active=document.activeElement; const keep = active && active.dataset && active.dataset.mark ? active.dataset.mark+active.dataset.id : null;
+  t.innerHTML=h;
+  if(keep){ const el=t.querySelector(`[data-mark="${keep.replace(/(prompt|query).*/,"$1")}"][data-id="${keep.replace(/^(prompt|query)/,"")}"]`); if(el) el.focus(); }
+  drawStats(rows);
+}
+function detail(a){
+  const fmt=v=>Array.isArray(v)?v.join(", "):(v??"—");
+  let h=`<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:6px 14px;margin-bottom:12px">`;
+  for(const id of AUTO){ const ok=correct(id,a); h+=`<div><span class="${ok?"ok":"no"}">${ok?"✓":"✗"}</span> ${id}: ${esc(fmt(a[id]))}</div>`; }
+  h+=`</div><b>D7 dashboard link</b><pre>${esc(a.D7||"—")}</pre><b>D8 prompt</b><pre>${esc(a.D8||"—")}</pre>`;
+  const F=a.F||{};
+  h+=`<b>F Annexure-Q</b><pre>Section: ${esc(F.sec||"")}\nClause: ${esc(F.cl||"")}\nPage: ${esc(F.pg||"")}\nQuote: ${esc(F.quote||"")}\nQuery: ${esc(F.query||"")}\nProposed change: ${esc(F.chg||"")}</pre>`;
+  return h;
+}
+function drawStats(rows){
+  if(!KEY || !rows.length){ $("#stat-table").innerHTML=`<tbody><tr><td class="note">Appears once people submit.</td></tr></tbody>`; return; }
+  const st=AUTO.map(id=>({id,p:rows.filter(r=>correct(id,r.s.answers||{})).length/rows.length})).sort((a,b)=>a.p-b.p);
+  let h=`<thead><tr><th>Question</th><th class="num">Correct</th><th style="width:40%"></th><th>Answer</th></tr></thead><tbody>`;
+  for(const s of st){ h+=`<tr><td>${s.id}</td><td class="num">${Math.round(s.p*100)}%</td><td><div class="stat-bar"><i style="width:${s.p*100}%"></i></div></td><td>${esc(KEY.answers[s.id]?.show||"")}</td></tr>`; }
+  $("#stat-table").innerHTML=h+`</tbody>`;
+}
+document.addEventListener("click", e=>{
+  const o=e.target.closest("[data-open]"); if(o){ openRow = openRow===o.dataset.open?null:o.dataset.open; drawResults(); }
+  const t=e.target.closest(".tab"); if(t) showView(t.dataset.view);
+});
+let markTimers={};
+document.addEventListener("input", e=>{
+  const el=e.target; if(!el.dataset || !el.dataset.mark || !db) return;
+  const id=el.dataset.id, f=el.dataset.mark;
+  clearTimeout(markTimers[id+f]);
+  markTimers[id+f]=setTimeout(async()=>{
+    const v = el.value==="" ? null : Math.max(0, Math.min(f==="prompt"?3:4, parseFloat(el.value)));
+    try{ await db.doc("marks/"+id).set(Object.assign({}, MARKS[id]||{}, {[f]:v})); }catch(err){}
+  }, 600);
+});
+$("#exportBtn").addEventListener("click", async ()=>{
+  const dl = window.claude && window.claude.use ? await window.claude.use("downloads") : null;
+  const head=["Name","Team","Auto","Prompt","Query","Total","Minutes",...AUTO];
+  const lines=[head.join(",")];
+  for(const id of Object.keys(SUBS)){ const s=SUBS[id], a=s.answers||{}, m=MARKS[id]||{}, au=autoScore(a);
+    const row=[s.name,s.team,au,m.prompt??"",m.query??"",au+(+m.prompt||0)+(+m.query||0),s.minutes,...AUTO.map(q=>correct(q,a)?1:0)];
+    lines.push(row.map(x=>`"${String(x??"").replace(/"/g,'""')}"`).join(",")); }
+  if(!dl){ $("#res-summary").textContent="Download isn’t available in this view."; return; }
+  try{ await dl.save({filename:"suroj-s1-assessment-results.csv",data:lines.join("\n")}); }catch(e){}
+});
+function showView(v){
+  ["take","results","key"].forEach(x=>$("#view-"+x).classList.toggle("hidden",x!==v));
+  document.querySelectorAll(".tab").forEach(t=>t.setAttribute("aria-selected",String(t.dataset.view===v)));
+  $("#clock").classList.toggle("hidden", v!=="take");
+  window.scrollTo(0,0);
+}
+function renderKey(){
+  const b=$("#key-body");
+  if(!KEY){ b.innerHTML=`<p class="note">The answer key hasn’t been loaded into this page’s store yet.</p>`; return; }
+  let h="";
+  for(const p of PARTS){
+    h+=`<section class="part"><div class="part-head"><span class="part-letter">${p.id}</span><h2>${esc(p.title)}</h2></div>`;
+    const ids = p.id==="E" ? ["e1","e2","e3","e4","e5","e6"] : p.qs.map(q=>q.id);
+    for(const id of ids){ const k=KEY.answers[id]; if(!k) continue;
+      h+=`<div class="key-item"><div class="q-id">${id}</div><div>Answer: <b>${esc(k.show)}</b></div><div class="note">${esc(k.why||"")}</div></div>`; }
+    h+=`</section>`;
+  }
+  b.innerHTML=h;
+}
+
+/* ---------------- boot ---------------- */
+if(state.startedAt) begin();
+initRuntime();
+</script>
+</body>
+</html>

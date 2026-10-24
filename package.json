@@ -4,7 +4,10 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
+    "extract:assessments": "node scripts/extract-session-assessments.mjs",
+    "predev": "npm run extract:assessments",
     "dev": "vite",
+    "prebuild": "npm run extract:assessments",
     "build": "tsc -b && vite build",
     "lint": "oxlint",
     "preview": "vite preview"

@@ -1,0 +1,561 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Session 5 assessment – Procurement & Stores</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Serif:ital,wght@1,400&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F2EEE4;--card:#FBF8F2;--ink:#1E1B16;--muted:#655E52;--line:#D8D0BF;
+  --rust:#9C3F22;--rust-soft:#F1DFD5;--navy:#2B3A55;--olive:#4F6131;--olive-soft:#E4E9D6;
+  --bad:#A12A1D;--bad-soft:#F6DCD7;--field:#FFFFFF;
+  color-scheme:light;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#181613;--card:#221F1B;--ink:#EDE7DB;--muted:#A69E90;--line:#3A352D;
+    --rust:#E3825E;--rust-soft:#3A2419;--navy:#9DB0D3;--olive:#A9BE7E;--olive-soft:#262C1C;
+    --bad:#F08A7C;--bad-soft:#3A1E1A;--field:#1B1916;color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#181613;--card:#221F1B;--ink:#EDE7DB;--muted:#A69E90;--line:#3A352D;
+  --rust:#E3825E;--rust-soft:#3A2419;--navy:#9DB0D3;--olive:#A9BE7E;--olive-soft:#262C1C;
+  --bad:#F08A7C;--bad-soft:#3A1E1A;--field:#1B1916;color-scheme:dark;
+}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:calc(env(safe-area-inset-top,0px) + 80px)}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 "IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--card)}
+.wrap{max-width:860px;margin:0 auto;padding:0 20px 80px}
+h1,h2,h3{line-height:1.2;margin:0}
+a{color:var(--navy)}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--navy);outline-offset:2px}
+
+/* top bar */
+.bar{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--card);border-bottom:1px solid var(--line)}
+.bar-in{max-width:860px;margin:0 auto;padding:10px 20px;display:flex;gap:16px;align-items:center;justify-content:space-between}
+.bar-title{font-weight:600;font-size:14px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.clock{font:500 22px/1 "IBM Plex Mono",ui-monospace,monospace;font-variant-numeric:tabular-nums;color:var(--ink)}
+.clock.low{color:var(--bad)}
+.fuse{height:4px;background:var(--rust);transform-origin:left;transition:transform 1s linear}
+.tabs{display:flex;gap:4px}
+.tab{border:1px solid var(--line);background:transparent;border-radius:6px;padding:6px 12px;font-size:14px;cursor:pointer}
+.tab[aria-selected="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+
+/* hero */
+.hero{padding:44px 0 28px;border-bottom:2px solid var(--ink);margin-bottom:28px}
+.hero h1{font-size:clamp(30px,5vw,44px);font-weight:700;letter-spacing:-.01em;max-width:18ch}
+.hero p.lede{font:italic 400 19px/1.6 "IBM Plex Serif",Georgia,serif;color:var(--muted);max-width:60ch;margin:14px 0 0}
+.facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:0;margin-top:26px;border:1px solid var(--line);background:var(--card)}
+.facts div{padding:12px 14px;border-right:1px solid var(--line)}
+.facts div:last-child{border-right:0}
+.facts b{display:block;font-size:20px}
+.facts span{font-size:13px;color:var(--muted)}
+
+.start{background:var(--card);border:1px solid var(--line);padding:22px;margin-bottom:28px}
+.start label{display:block;font-weight:600;margin-bottom:6px}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+input[type=text],input[type=number],input[type=url],select,textarea{background:var(--field);border:1px solid var(--line);border-radius:4px;padding:9px 11px;width:100%}
+textarea{min-height:110px;resize:vertical;line-height:1.45}
+.btn{background:var(--rust);color:#fff;border:0;border-radius:4px;padding:11px 20px;font-weight:600;cursor:pointer}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
+.note{font-size:14px;color:var(--muted)}
+
+/* sections */
+section.part{margin:0 0 40px}
+.part-head{display:grid;grid-template-columns:auto 1fr auto;gap:14px;align-items:baseline;border-top:1px solid var(--ink);padding-top:14px;margin-bottom:14px}
+.part-letter{font:600 15px/1 "IBM Plex Mono",monospace;background:var(--ink);color:var(--bg);padding:6px 9px;border-radius:3px}
+.part-head h2{font-size:22px}
+.part-meta{font-size:13px;color:var(--muted);white-space:nowrap}
+.brief{background:var(--card);border-left:4px solid var(--navy);padding:14px 16px;margin-bottom:18px}
+.brief p{margin:0 0 8px}.brief p:last-child{margin:0}
+.files{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.files code{font:13px "IBM Plex Mono",monospace;background:var(--bg);border:1px solid var(--line);padding:2px 7px;border-radius:3px}
+
+.q{background:var(--card);border:1px solid var(--line);padding:16px 18px;margin-bottom:12px}
+.q-top{display:flex;justify-content:space-between;gap:12px;margin-bottom:10px}
+.q-text{font-weight:500}
+.q-id{font:12px "IBM Plex Mono",monospace;color:var(--muted);white-space:nowrap}
+.opts{display:grid;gap:6px}
+.opt{display:flex;gap:10px;align-items:flex-start;padding:8px 10px;border:1px solid var(--line);border-radius:4px;cursor:pointer;background:var(--bg)}
+.opt:has(input:checked){border-color:var(--rust);background:var(--rust-soft)}
+.opt input{margin-top:4px;accent-color:var(--rust)}
+.unit{display:flex;align-items:center;gap:8px;max-width:280px}
+.unit span{font-size:14px;color:var(--muted);white-space:nowrap}
+.cw{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;padding:10px 0;border-top:1px solid var(--line)}
+.cw:first-of-type{border-top:0}
+.seg{display:flex;border:1px solid var(--line);border-radius:4px;overflow:hidden}
+.seg label{padding:6px 12px;cursor:pointer;font-size:14px}
+.seg input{position:absolute;opacity:0;pointer-events:none}
+.seg label:has(input:checked){background:var(--ink);color:var(--bg)}
+.seg label:has(input:focus-visible){outline:3px solid var(--navy);outline-offset:-3px}
+.aiq{font:15px/1.5 "IBM Plex Mono",monospace}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.grid2 label,.field label{font-size:13px;font-weight:600;display:block;margin-bottom:4px}
+.field{margin-top:10px}
+
+.submit-box{border:2px solid var(--ink);padding:20px;background:var(--card)}
+.done{background:var(--olive-soft);border:1px solid var(--olive);padding:16px;margin-bottom:24px}
+.err{background:var(--bad-soft);border:1px solid var(--bad);padding:12px 14px;margin-top:12px}
+
+/* results */
+.tbl-wrap{overflow-x:auto;border:1px solid var(--line);background:var(--card)}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{padding:9px 10px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+th{font-weight:600;background:var(--bg);white-space:nowrap}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+td input[type=number]{width:64px;padding:4px 6px}
+.ok{color:var(--olive);font-weight:600}.no{color:var(--bad);font-weight:600}
+.detail{background:var(--bg);padding:14px}
+.detail pre{white-space:pre-wrap;font:13px/1.5 "IBM Plex Mono",monospace;margin:4px 0 10px;background:var(--card);border:1px solid var(--line);padding:8px}
+.stat-bar{height:8px;background:var(--line);border-radius:4px;overflow:hidden;min-width:80px}
+.stat-bar i{display:block;height:100%;background:var(--olive)}
+.key-item{border-top:1px solid var(--line);padding:12px 0}
+.key-item b{color:var(--olive)}
+.hidden{display:none!important}
+@media (max-width:620px){
+  .grid2{grid-template-columns:1fr}
+  .part-head{grid-template-columns:auto 1fr}
+  .part-meta{grid-column:1/-1}
+  .bar-title{display:none}
+  .cw{grid-template-columns:1fr}
+}
+@media (prefers-reduced-motion:reduce){.fuse{transition:none}}
+</style>
+</head>
+<body>
+<header class="bar">
+  <div class="bar-in">
+    <div class="bar-title">Suroj Buildcon × Be10x · Session 5 assessment</div>
+    <div class="tabs hidden" id="tabs" role="tablist">
+      <button class="tab" role="tab" aria-selected="true" data-view="take">Assessment</button>
+      <button class="tab" role="tab" aria-selected="false" data-view="results">Results <span id="rcount"></span></button>
+      <button class="tab" role="tab" aria-selected="false" data-view="key">Answer key</button>
+    </div>
+    <div class="clock" id="clock" aria-live="off">30:00</div>
+  </div>
+  <div class="fuse" id="fuse"></div>
+</header>
+
+<main class="wrap">
+<!-- ============ TAKE ============ -->
+<div id="view-take">
+  <div class="hero">
+    <h1>Procurement & Stores: ready for audit week, from indent to machine.</h1>
+    <p class="lede">Thirty minutes. The same five linked datasets from the workshop, with new tolerances, rupee values and links across files. Tell AI exactly how to look, and prove two findings yourself before you type them here.</p>
+    <div class="facts">
+      <div><b>30 min</b><span>timer starts when you press Start</span></div>
+      <div><b>7 parts</b><span>A to G, do them in order</span></div>
+      <div><b>34 marks</b><span>27 auto-scored, 7 marked by the trainer</span></div>
+      <div><b>Rates are Tier 3</b><span>synthetic here – real rates go to approved accounts only</span></div>
+    </div>
+  </div>
+
+  <div id="done-banner" class="done hidden"></div>
+
+  <div class="start" id="start-box">
+    <label for="pname">Your name</label>
+    <div class="row">
+      <input type="text" id="pname" autocomplete="name" placeholder="As it should appear on the results sheet" style="flex:1;min-width:220px">
+      <select id="pteam" style="width:auto" aria-label="Your team">
+        <option value="">Your team</option>
+        <option>Tendering</option><option>Contracts</option><option>EPC</option><option>Business Development</option>
+      </select>
+      <button class="btn" id="startBtn">Start the 30 minutes</button>
+    </div>
+    <p class="note" style="margin:10px 0 0">Your answers save on this device as you go. Nothing reaches the trainer until you press Submit at the end.</p>
+  </div>
+
+  <form id="quiz" class="hidden" onsubmit="return false"></form>
+</div>
+
+<!-- ============ RESULTS ============ -->
+<div id="view-results" class="hidden">
+  <div class="hero" style="padding-top:32px">
+    <h1 style="max-width:none">Results</h1>
+    <p class="lede">Auto marks are computed from the answer key. Enter the two trainer-marked scores per person; they save as you type.</p>
+  </div>
+  <div class="row" style="margin-bottom:14px;justify-content:space-between">
+    <span class="note" id="res-summary">Loading…</span>
+    <button class="btn ghost" id="exportBtn">Download results (CSV)</button>
+  </div>
+  <div class="tbl-wrap"><table id="res-table"></table></div>
+  <h2 style="font-size:20px;margin:34px 0 12px">Where the room went wrong</h2>
+  <p class="note" style="margin-top:0">Share of submissions answering each auto-marked question correctly, lowest first. Start the debrief at the top.</p>
+  <div class="tbl-wrap"><table id="stat-table"></table></div>
+</div>
+
+<!-- ============ KEY ============ -->
+<div id="view-key" class="hidden">
+  <div class="hero" style="padding-top:32px">
+    <h1 style="max-width:none">Answer key</h1>
+    <p class="lede">Visible only to you and other editors of this page. Use it for the debrief.</p>
+  </div>
+  <div id="key-body"><p class="note">Loading…</p></div>
+</div>
+</main>
+
+<script>
+/* ---------------- Question bank (no answers here) ---------------- */
+const PARTS = [
+ {id:"A",title:"How AI works, and procurement data rules",mins:4,
+  brief:`<p>No files needed. Pick one answer per question.</p>`,
+  qs:[
+   {id:"A1",type:"choice",text:"Which of these is AI (a pattern learned from examples) rather than a rule someone wrote?",
+    opts:{a:"The ERP computing PO value = quantity × rate",b:"A reorder alert when cement drops below 300 bags",c:"A system that flags two quotations that look like they came from the same office",d:"A 3-way match blocking payment when GRN ≠ PO"}},
+   {id:"A2",type:"choice",text:"AI gives you a confident total for “excess paid above rate contract”. Why shouldn’t you paste it straight into the audit reply?",
+    opts:{a:"AI apps are not allowed in audits",b:"It writes the total as likely next tokens, not by calculating – ask for code or the formula and check one row yourself",c:"Totals are always rounded",d:"It only reads the first 50 rows"}},
+   {id:"A3",type:"choice",text:"Rates are Tier 3. Which of these can go into an AI app on your phone as it is?",
+    opts:{a:"Last month’s comparative statement with vendor names and rates",b:"A blank CS template and your approval-matrix rules, with no vendors or rates",c:"The steel rate contract PDF",d:"A vendor’s quotation forwarded on WhatsApp"}},
+   {id:"A4",type:"choice",text:"Which of these is agentic AI?",
+    opts:{a:"AI drafts a follow-up email to a late vendor",b:"AI explains what a debit note is",c:"An assistant that watches open POs, reads each delivery challan, compares it with the PO and drafts the debit note for your approval",d:"AI turns a photo of a challan into a table"}},
+   {id:"A5",type:"choice",text:"Which prompt is most likely to catch a split PO?",
+    opts:{a:"“Check the PO register for problems.”",b:"“Find any suspicious POs and explain why.”",c:"“List pairs of POs with the same site, material and vendor within 7 days, each under ₹5 lakh but together ₹5 lakh or more. Give PO numbers, dates and values, or say NONE.”",d:"“Are there split POs? Yes or no.”"}},
+   {id:"A6",type:"choice",text:"AI flags six awards that didn’t go to L1. Two have a written justification on the CS. What do you report?",
+    opts:{a:"All six – L1 must always win",b:"Read the two justifications; report only the awards with no valid written reason",c:"None – buyers know best",d:"Ask AI to decide which justifications are good enough"}}
+  ]},
+ {id:"B",title:"Indents and POs",mins:5,
+  brief:`<p>POs of ₹5 lakh or more need the Head of Procurement’s approval.</p><div class="files"><code>1_Indents_POs.csv</code></div>`,
+  qs:[
+   {id:"B1",type:"num",unit:"₹",text:"How much more was paid than the rate contract allowed, across all POs above their RC rate? (rate difference × PO quantity)"},
+   {id:"B2",type:"num",unit:"POs",text:"How many POs of ₹5 lakh or more were approved by a Site PM?"},
+   {id:"B3",type:"num",unit:"POs",text:"In how many POs does PO_Value not equal PO_Qty × PO_Rate?"},
+   {id:"B4",type:"num",unit:"POs",text:"How many POs are dated before the indent they answer?"}
+  ]},
+ {id:"C",title:"Quotations and comparative statements",mins:5,
+  brief:`<p>Recalculate every landed rate yourself: Basic_Rate + Freight_per_Unit. Don’t trust the Landed_Rate column.</p><div class="files"><code>2_Quotations_CS.csv</code></div>`,
+  qs:[
+   {id:"C1",type:"num",unit:"RFQs",text:"After recalculating, how many RFQs were awarded to a vendor who was not L1 and have no written justification?"},
+   {id:"C2",type:"num",unit:"₹",text:"How much more did those awards cost than L1? (landed-rate difference × quantity)"},
+   {id:"C3",type:"num",unit:"RFQs",text:"How many RFQs have fewer than three quotes?"},
+   {id:"C4",type:"num",unit:"₹ lakh",text:"V214 and V219 share one GSTIN. What is the value awarded to V214 in RFQs where V219 also quoted? (landed rate × quantity)"}
+  ]},
+ {id:"D",title:"Goods receipts and site stock",mins:6,
+  brief:`<p>Rule for this assessment: a receipt short by <b>more than 1%</b> of the challan quantity needs a debit note.</p><div class="files"><code>3_GRN_Register.csv</code><code>4_Stock_Ledger.csv</code><code>1_Indents_POs.csv</code></div>`,
+  qs:[
+   {id:"D1",type:"num",unit:"GRNs",text:"How many GRNs are short by more than 1% with no debit note raised?"},
+   {id:"D2",type:"num",unit:"cases",text:"How many times was the same challan booked twice against the same PO?"},
+   {id:"D3",type:"num",unit:"GRNs",text:"How many TMT steel GRNs were accepted without a mill test certificate?"},
+   {id:"D4",type:"choice",text:"Which PO is both dated before its indent and received twice on one challan?",
+    opts:{PO2040:"PO2040",PO2064:"PO2064",PO2073:"PO2073",PO2117:"PO2117"}},
+   {id:"D5",type:"num",unit:"bags",text:"Cement issued beyond Theoretical_Issue × (1 + Wastage_Norm_Pct), all sites and months, in total?"},
+   {id:"D6",type:"num",unit:"Nos",text:"At P04 in September, how many shuttering plates and props together are missing (book minus physical)?"}
+  ]},
+ {id:"E",title:"Plant and machinery dashboard",mins:6,
+  brief:`<p>Upload both files and ask your AI app to <b>build a September plant dashboard for the V&M head</b>: hours, diesel per hour by machine type, service status and hire bills. Make it show the Log_IDs behind each number. Service is due at Last_Service_Meter + Service_Interval_Hrs.</p><div class="files"><code>5_Machine_Log_Sep.csv</code><code>5b_Machine_Master.csv</code></div>`,
+  qs:[
+   {id:"E1",type:"num",unit:"₹",text:"How much have hire vendors billed above Hours_Logged × hire rate in September?"},
+   {id:"E2",type:"num",unit:"machines",text:"How many machines are past their service point at the end of September?"},
+   {id:"E3",type:"num",unit:"litres",text:"How much diesel was issued on Idle or Breakdown days?"},
+   {id:"E4",type:"num",unit:"logs",text:"On how many logs does Meter_Start go backwards from the previous day’s Meter_End?"},
+   {id:"E5",type:"text",short:true,url:true,optional:true,text:"Link to your dashboard, if your AI app gives you one (optional).",ph:"https://…"},
+   {id:"E6",type:"text",manual:true,text:"Paste the exact prompt you used to build the dashboard. (Trainer-marked, 3 marks.)",ph:"Paste your prompt here"}
+  ]},
+ {id:"F",title:"Check the AI",mins:2,
+  brief:`<p>A colleague pasted this AI summary into the audit-week pack. Mark each line Correct or Wrong.</p>`,
+  qs:[
+   {id:"F",type:"cw",text:"AI output",items:{
+     f1:"RFQ315 and RFQ334 were awarded to non-L1 vendors and must be reported as violations.",
+     f2:"GR5131 and GR5002 were short by about 4% and still need debit notes.",
+     f3:"The M08 Hydra hire bill matches the hours logged.",
+     f4:"Tower crane M07 drew no diesel all month, so its log must be fake.",
+     f5:"V214 and V219 share one GSTIN, so their quotes can’t count as independent.",
+     f6:"Formwork at P04 is fine – the book balance of plates and props went up every month."}}
+  ]},
+ {id:"G",title:"Write to the hire vendor",mins:2,
+  brief:`<p>Draft a short, firm email to the hire vendor for <b>M04 (JCB, P02)</b> querying the September bill against Suroj’s logged hours. Use the figures from your analysis. (Trainer-marked, 4 marks.)</p>`,
+  qs:[{id:"G",type:"text",manual:true,text:"Email to the M04 hire vendor",ph:"Subject: …"}]}
+];
+
+/* ---------------- helpers ---------------- */
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const LS = "suroj-s5-proc-assess-v1";
+const DURATION = 30*60*1000;
+let state = {name:"",team:"",startedAt:null,ans:{},submittedAt:null};
+try{ const s = JSON.parse(localStorage.getItem(LS)||"null"); if(s) state = Object.assign(state,s); }catch(e){}
+const save = () => { try{ localStorage.setItem(LS, JSON.stringify(state)); }catch(e){} };
+
+/* ---------------- render quiz ---------------- */
+function renderQuiz(){
+  const f = $("#quiz"); let h = "";
+  for(const p of PARTS){
+    h += `<section class="part" id="part-${p.id}"><div class="part-head"><span class="part-letter">${p.id}</span><h2>${esc(p.title)}</h2><span class="part-meta">about ${p.mins} min</span></div><div class="brief">${p.brief}</div>`;
+    for(const q of p.qs){
+      const v = state.ans;
+      if(q.type==="cw"){
+        h += `<div class="q"><div class="q-top"><div class="q-text">${esc(q.text)}</div><span class="q-id">F · 6 × ½ mark</span></div>`;
+        for(const [k,t] of Object.entries(q.items)){
+          h += `<div class="cw"><div class="aiq">“${esc(t)}”</div><div class="seg" role="radiogroup" aria-label="${esc(t)}">
+            <label><input type="radio" name="${k}" value="C" ${v[k]==="C"?"checked":""}>Correct</label>
+            <label><input type="radio" name="${k}" value="W" ${v[k]==="W"?"checked":""}>Wrong</label></div></div>`;
+        }
+        h += `</div>`; continue;
+      }
+      if(q.type==="annexq"){
+        const a = v.F || {};
+        h += `<div class="q"><div class="q-top"><div class="q-text">Annexure-Q row (columns as in Clause 5.2)</div><span class="q-id">F · 4 marks</span></div>
+          <div class="grid2">
+            <div><label for="F_sec">Tender section</label><input type="text" id="F_sec" data-f="sec" value="${esc(a.sec)}"></div>
+            <div><label for="F_cl">Clause no.</label><input type="text" id="F_cl" data-f="cl" value="${esc(a.cl)}"></div>
+            <div><label for="F_pg">Page no.</label><input type="text" id="F_pg" data-f="pg" value="${esc(a.pg)}"></div>
+          </div>
+          <div class="field"><label for="F_quote">Existing clause (quote)</label><textarea id="F_quote" data-f="quote" style="min-height:70px">${esc(a.quote)}</textarea></div>
+          <div class="field"><label for="F_query">Query / clarification sought</label><textarea id="F_query" data-f="query" style="min-height:70px">${esc(a.query)}</textarea></div>
+          <div class="field"><label for="F_chg">Bidder’s proposed change</label><textarea id="F_chg" data-f="chg" style="min-height:60px">${esc(a.chg)}</textarea></div></div>`;
+        continue;
+      }
+      h += `<div class="q"><div class="q-top"><div class="q-text">${esc(q.text)}</div><span class="q-id">${q.id}${q.manual?" · trainer":""}${q.optional?" · optional":""}</span></div>`;
+      if(q.type==="choice"||q.type==="multi"){
+        const it = q.type==="choice"?"radio":"checkbox";
+        h += `<div class="opts">`;
+        for(const [k,t] of Object.entries(q.opts)){
+          const chk = q.type==="choice" ? v[q.id]===k : (v[q.id]||[]).includes(k);
+          h += `<label class="opt"><input type="${it}" name="${q.id}" value="${esc(k)}" ${chk?"checked":""}><span>${esc(t)}</span></label>`;
+        }
+        if(q.type==="multi") h += `<label class="opt"><input type="checkbox" name="${q.id}" value="NONE" ${(v[q.id]||[]).includes("NONE")?"checked":""}><span>None of these</span></label>`;
+        h += `</div>`;
+      } else if(q.type==="num"){
+        h += `<div class="unit"><input type="number" step="any" inputmode="decimal" name="${q.id}" aria-label="${q.id} answer" value="${esc(v[q.id])}"><span>${esc(q.unit)}</span></div>`;
+      } else if(q.type==="text"){
+        h += q.short ? `<input type="${q.url?"url":"text"}" name="${q.id}" placeholder="${esc(q.ph||"")}" aria-label="${q.id} answer" value="${esc(v[q.id])}" style="max-width:${q.url?"100%":"240px"}">`
+                     : `<textarea name="${q.id}" placeholder="${esc(q.ph||"")}" aria-label="${q.id} answer">${esc(v[q.id])}</textarea>`;
+      }
+      h += `</div>`;
+    }
+    h += `</section>`;
+  }
+  h += `<div class="submit-box"><h2 style="font-size:20px;margin-bottom:6px">Submit to the trainer</h2>
+    <p class="note" id="unanswered" style="margin:0 0 12px"></p>
+    <button class="btn" id="submitBtn" type="button">Submit my answers</button>
+    <div id="submit-msg"></div></div>`;
+  f.innerHTML = h;
+  f.addEventListener("input", onInput); f.addEventListener("change", onInput);
+  $("#submitBtn").addEventListener("click", submit);
+  updateUnanswered();
+}
+function onInput(e){
+  const el = e.target; if(state.submittedAt) return;
+  if(el.dataset.f){ state.ans.F = state.ans.F||{}; state.ans.F[el.dataset.f] = el.value; }
+  else if(el.type==="checkbox"){
+    let arr = [...document.querySelectorAll(`input[name="${el.name}"]:checked`)].map(x=>x.value);
+    if(el.value==="NONE" && el.checked){ arr=["NONE"]; document.querySelectorAll(`input[name="${el.name}"]`).forEach(x=>x.checked=x.value==="NONE"); }
+    else if(el.checked && arr.includes("NONE")){ arr=arr.filter(x=>x!=="NONE"); document.querySelector(`input[name="${el.name}"][value="NONE"]`).checked=false; }
+    state.ans[el.name]=arr;
+  } else if(el.name){ state.ans[el.name] = el.value; }
+  save(); updateUnanswered();
+}
+function requiredIds(){
+  const ids=[];
+  for(const p of PARTS) for(const q of p.qs){
+    if(q.type==="cw") ids.push(...Object.keys(q.items));
+    else if(q.type==="annexq") ids.push("F");
+    else if(!q.optional) ids.push(q.id);
+  }
+  return ids;
+}
+function isBlank(id){
+  const v=state.ans[id];
+  return v==null || (Array.isArray(v)?v.length===0:String(v).trim()==="");
+}
+function updateUnanswered(){
+  const miss = requiredIds().filter(isBlank);
+  const el=$("#unanswered"); if(!el) return;
+  el.textContent = miss.length ? `${miss.length} question${miss.length>1?"s":""} still blank: ${miss.join(", ")}. You can still submit.` : "Everything is answered.";
+}
+
+/* ---------------- timer ---------------- */
+let tick;
+function startTimer(){
+  clearInterval(tick);
+  const run=()=>{
+    const left = Math.max(0, state.startedAt + DURATION - Date.now());
+    const m=Math.floor(left/60000), s=Math.floor(left%60000/1000);
+    const c=$("#clock"); c.textContent=`${String(m).padStart(2,"0")}:${String(s).padStart(2,"0")}`;
+    c.classList.toggle("low", left<5*60000);
+    $("#fuse").style.transform=`scaleX(${left/DURATION})`;
+    if(left===0){ clearInterval(tick); c.textContent="Time’s up"; }
+  };
+  run(); tick=setInterval(run,1000);
+}
+
+/* ---------------- runtime ---------------- */
+let db=null, user=null, uid=null, isEditor=false, KEY=null;
+async function initRuntime(){
+  if(!window.claude || !window.claude.use) return;
+  try{ db = await window.claude.use("db"); }catch(e){ db=null; }
+  try{ user = await window.claude.use("user"); }catch(e){ user=null; }
+  try{ uid = user ? await user.id() : null; }catch(e){ uid=null; }
+  try{ isEditor = user ? !!(await user.canEdit()) : false; }catch(e){ isEditor=false; }
+  if(db && uid && !state.submittedAt){
+    try{ const snap = await db.doc("submissions/"+uid).get(); if(snap.exists){ const d=snap.data(); state.submittedAt=d.submittedAt; state.name=d.name; save(); showSubmitted(); } }catch(e){}
+  }
+  if(isEditor && db){
+    $("#tabs").classList.remove("hidden");
+    try{ const k = await db.doc("config/key").get(); KEY = k.exists ? k.data() : null; }catch(e){ KEY=null; }
+    renderKey(); watchResults();
+  }
+}
+
+/* ---------------- start / submit ---------------- */
+$("#pname").value = state.name||""; $("#pteam").value = state.team||"";
+$("#startBtn").addEventListener("click", ()=>{
+  const n=$("#pname").value.trim();
+  if(!n){ $("#pname").focus(); $("#pname").setAttribute("aria-invalid","true"); return; }
+  state.name=n; state.team=$("#pteam").value; if(!state.startedAt) state.startedAt=Date.now(); save(); begin();
+});
+function begin(){
+  $("#start-box").classList.add("hidden");
+  $("#quiz").classList.remove("hidden");
+  renderQuiz(); startTimer();
+  if(state.submittedAt) showSubmitted();
+}
+async function submit(){
+  const msg=$("#submit-msg"); msg.innerHTML="";
+  if(!db || !uid){
+    msg.innerHTML=`<div class="err">This page can’t reach the results store from here. Make sure you opened the link the trainer shared while signed in to Claude, then try again. Your answers are kept on this device.</div>`;
+    return;
+  }
+  const btn=$("#submitBtn"); btn.disabled=true; btn.textContent="Submitting…";
+  const doc={name:state.name,team:state.team||"",startedAt:state.startedAt,submittedAt:Date.now(),
+    minutes:Math.round((Date.now()-state.startedAt)/60000),answers:state.ans};
+  try{
+    await db.doc("submissions/"+uid).set(doc);
+    state.submittedAt=doc.submittedAt; save(); showSubmitted();
+  }catch(e){
+    if(e && e.code==="unavailable"){ setTimeout(submit, 800+Math.random()*800); return; }
+    btn.disabled=false; btn.textContent="Submit my answers";
+    msg.innerHTML=`<div class="err">Submission was refused (${esc(e&&e.code||"error")}). You may only have view access – ask the trainer to give you Contributor access, then press Submit again.</div>`;
+  }
+}
+function showSubmitted(){
+  const b=$("#done-banner"); b.classList.remove("hidden");
+  const t=new Date(state.submittedAt).toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"});
+  b.innerHTML=`<b>Submitted at ${esc(t)}.</b> The trainer has your answers. Results and the walkthrough come in the debrief.`;
+  document.querySelectorAll("#quiz input,#quiz textarea,#quiz select").forEach(x=>x.disabled=true);
+  const btn=$("#submitBtn"); if(btn){ btn.disabled=true; btn.textContent="Submitted"; }
+  clearInterval(tick); $("#clock").textContent="Done";
+}
+
+/* ---------------- grading (editors only, key from db) ---------------- */
+const AUTO = ["A1","A2","A3","A4","A5","A6","B1","B2","B3","B4","C1","C2","C3","C4","D1","D2","D3","D4","D5","D6","E1","E2","E3","E4","f1","f2","f3","f4","f5","f6"];
+function weight(id){ return /^f\d$/.test(id) ? 0.5 : 1; }
+function correct(id, a){
+  const k = KEY && KEY.answers && KEY.answers[id]; if(!k) return false;
+  const v = a[id];
+  if(k.t==="choice") return v===k.v;
+  if(k.t==="multi"){ const s=[...(v||[])].sort().join("|"); return s===[...k.v].sort().join("|"); }
+  if(k.t==="num"){ const n=parseFloat(String(v??"").replace(/,/g,"")); return !isNaN(n) && n>=k.min && n<=k.max; }
+  if(k.t==="text"){ const n=String(v||"").trim().toUpperCase().replace(/\s+/g,""); return k.v.map(x=>x.toUpperCase()).includes(n); }
+  return false;
+}
+function autoScore(a){ return AUTO.reduce((s,id)=>s+(correct(id,a)?weight(id):0),0); }
+const AUTO_MAX = AUTO.reduce((s,id)=>s+weight(id),0);
+
+let SUBS={}, MARKS={}, openRow=null;
+function watchResults(){
+  db.collection("submissions").onSnapshot(qs=>{
+    SUBS={}; qs.docs.forEach(d=>SUBS[d.id]=d.data()); drawResults();
+  }, err=>{ $("#res-summary").textContent="Couldn’t load submissions ("+(err&&err.code)+")."; });
+  db.collection("marks").onSnapshot(qs=>{ MARKS={}; qs.docs.forEach(d=>MARKS[d.id]=d.data()); drawResults(); }, ()=>{});
+}
+function drawResults(){
+  const ids=Object.keys(SUBS);
+  $("#rcount").textContent = ids.length ? `(${ids.length})` : "";
+  if(!KEY){ $("#res-summary").textContent="Answer key not found in the results store, so auto marks can’t be computed."; }
+  const rows = ids.map(id=>{ const s=SUBS[id], a=s.answers||{}, m=MARKS[id]||{};
+    const au=autoScore(a), man=(+m.prompt||0)+(+m.query||0);
+    return {id,s,au,m,total:au+man}; }).sort((x,y)=>y.total-x.total);
+  if(KEY){
+    const avg = rows.length ? (rows.reduce((t,r)=>t+r.au,0)/rows.length) : 0;
+    $("#res-summary").textContent = rows.length ? `${rows.length} submitted · average auto score ${avg.toFixed(1)} / ${AUTO_MAX}` : "No submissions yet. They appear here live.";
+  }
+  let h=`<thead><tr><th>Name</th><th>Team</th><th class="num">Auto /${AUTO_MAX}</th><th class="num">Prompt /3</th><th class="num">Email /4</th><th class="num">Total /${AUTO_MAX+7}</th><th class="num">Minutes</th><th></th></tr></thead><tbody>`;
+  for(const r of rows){
+    h+=`<tr><td>${esc(r.s.name)}</td><td>${esc(r.s.team)}</td><td class="num">${r.au}</td>
+      <td class="num"><input type="number" min="0" max="3" step="0.5" data-mark="prompt" data-id="${r.id}" value="${esc(r.m.prompt??"")}" aria-label="Prompt mark for ${esc(r.s.name)}"></td>
+      <td class="num"><input type="number" min="0" max="4" step="0.5" data-mark="query" data-id="${r.id}" value="${esc(r.m.query??"")}" aria-label="Email mark for ${esc(r.s.name)}"></td>
+      <td class="num"><b>${r.total}</b></td><td class="num">${esc(r.s.minutes)}</td>
+      <td><button class="btn ghost" style="padding:4px 10px" data-open="${r.id}">${openRow===r.id?"Hide":"Answers"}</button></td></tr>`;
+    if(openRow===r.id) h+=`<tr><td colspan="8" class="detail">${detail(r.s.answers||{})}</td></tr>`;
+  }
+  h+=`</tbody>`;
+  const t=$("#res-table"); 
+  const active=document.activeElement; const keep = active && active.dataset && active.dataset.mark ? active.dataset.mark+active.dataset.id : null;
+  t.innerHTML=h;
+  if(keep){ const el=t.querySelector(`[data-mark="${keep.replace(/(prompt|query).*/,"$1")}"][data-id="${keep.replace(/^(prompt|query)/,"")}"]`); if(el) el.focus(); }
+  drawStats(rows);
+}
+function detail(a){
+  const fmt=v=>Array.isArray(v)?v.join(", "):(v??"—");
+  let h=`<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:6px 14px;margin-bottom:12px">`;
+  for(const id of AUTO){ const ok=correct(id,a); h+=`<div><span class="${ok?"ok":"no"}">${ok?"✓":"✗"}</span> ${id}: ${esc(fmt(a[id]))}</div>`; }
+  h+=`</div><b>E5 dashboard link</b><pre>${esc(a.E5||"—")}</pre><b>E6 prompt</b><pre>${esc(a.E6||"—")}</pre><b>G email to M04 hire vendor</b><pre>${esc(a.G||"—")}</pre>`;
+  return h;
+}
+function drawStats(rows){
+  if(!KEY || !rows.length){ $("#stat-table").innerHTML=`<tbody><tr><td class="note">Appears once people submit.</td></tr></tbody>`; return; }
+  const st=AUTO.map(id=>({id,p:rows.filter(r=>correct(id,r.s.answers||{})).length/rows.length})).sort((a,b)=>a.p-b.p);
+  let h=`<thead><tr><th>Question</th><th class="num">Correct</th><th style="width:40%"></th><th>Answer</th></tr></thead><tbody>`;
+  for(const s of st){ h+=`<tr><td>${s.id}</td><td class="num">${Math.round(s.p*100)}%</td><td><div class="stat-bar"><i style="width:${s.p*100}%"></i></div></td><td>${esc(KEY.answers[s.id]?.show||"")}</td></tr>`; }
+  $("#stat-table").innerHTML=h+`</tbody>`;
+}
+document.addEventListener("click", e=>{
+  const o=e.target.closest("[data-open]"); if(o){ openRow = openRow===o.dataset.open?null:o.dataset.open; drawResults(); }
+  const t=e.target.closest(".tab"); if(t) showView(t.dataset.view);
+});
+let markTimers={};
+document.addEventListener("input", e=>{
+  const el=e.target; if(!el.dataset || !el.dataset.mark || !db) return;
+  const id=el.dataset.id, f=el.dataset.mark;
+  clearTimeout(markTimers[id+f]);
+  markTimers[id+f]=setTimeout(async()=>{
+    const v = el.value==="" ? null : Math.max(0, Math.min(f==="prompt"?3:4, parseFloat(el.value)));
+    try{ await db.doc("marks/"+id).set(Object.assign({}, MARKS[id]||{}, {[f]:v})); }catch(err){}
+  }, 600);
+});
+$("#exportBtn").addEventListener("click", async ()=>{
+  const dl = window.claude && window.claude.use ? await window.claude.use("downloads") : null;
+  const head=["Name","Team","Auto","Prompt","Email","Total","Minutes",...AUTO];
+  const lines=[head.join(",")];
+  for(const id of Object.keys(SUBS)){ const s=SUBS[id], a=s.answers||{}, m=MARKS[id]||{}, au=autoScore(a);
+    const row=[s.name,s.team,au,m.prompt??"",m.query??"",au+(+m.prompt||0)+(+m.query||0),s.minutes,...AUTO.map(q=>correct(q,a)?1:0)];
+    lines.push(row.map(x=>`"${String(x??"").replace(/"/g,'""')}"`).join(",")); }
+  if(!dl){ $("#res-summary").textContent="Download isn’t available in this view."; return; }
+  try{ await dl.save({filename:"suroj-s5-procurement-stores-results.csv",data:lines.join("\n")}); }catch(e){}
+});
+function showView(v){
+  ["take","results","key"].forEach(x=>$("#view-"+x).classList.toggle("hidden",x!==v));
+  document.querySelectorAll(".tab").forEach(t=>t.setAttribute("aria-selected",String(t.dataset.view===v)));
+  $("#clock").classList.toggle("hidden", v!=="take");
+  window.scrollTo(0,0);
+}
+function renderKey(){
+  const b=$("#key-body");
+  if(!KEY){ b.innerHTML=`<p class="note">The answer key hasn’t been loaded into this page’s store yet.</p>`; return; }
+  let h="";
+  for(const p of PARTS){
+    h+=`<section class="part"><div class="part-head"><span class="part-letter">${p.id}</span><h2>${esc(p.title)}</h2></div>`;
+    const ids = p.id==="F" ? ["f1","f2","f3","f4","f5","f6"] : p.qs.map(q=>q.id);
+    for(const id of ids){ const k=KEY.answers[id]; if(!k) continue;
+      h+=`<div class="key-item"><div class="q-id">${id}</div><div>Answer: <b>${esc(k.show)}</b></div><div class="note">${esc(k.why||"")}</div></div>`; }
+    h+=`</section>`;
+  }
+  b.innerHTML=h;
+}
+
+/* ---------------- boot ---------------- */
+if(state.startedAt) begin();
+initRuntime();
+</script>
+</body>
+</html>
