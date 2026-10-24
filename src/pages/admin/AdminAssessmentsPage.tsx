@@ -1,6 +1,5 @@
 import assessmentsData from '@/data/departmentalAssessments.json';
 import { useAdminData } from '@/hooks/useAdminData';
-import { DEPARTMENT_MAP } from '@/lib/constants';
 import type { DepartmentalAssessment } from '@/types/departmentalAssessment';
 import AdminLayout from '@/components/layout/AdminLayout';
 import EmptyState from '@/components/ui/EmptyState';
