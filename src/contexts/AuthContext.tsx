@@ -12,6 +12,8 @@ interface AuthUser {
   employeeDbId?: string;
   name?: string;
   departmentId?: string;
+  departmentName?: string;
+  departmentCode?: string;
 }
 
 interface AuthContextValue {
@@ -111,6 +113,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (profile) {
         const emp = profile.employees as { id: string; employee_id: string; name: string; department_id: string } | null;
+        let departmentName: string | undefined;
+        let departmentCode: string | undefined;
+        if (emp?.department_id) {
+          const { data: department } = await supabase
+            .from('departments')
+            .select('name, code')
+            .eq('id', emp.department_id)
+            .maybeSingle();
+          departmentName = department?.name;
+          departmentCode = department?.code;
+        }
         return {
           id, email,
           role: profile.role as UserRole,
@@ -118,6 +131,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           employeeDbId: emp?.id,
           name: emp?.name ?? email,
           departmentId: emp?.department_id,
+          departmentName,
+          departmentCode,
         };
       }
     } catch { /* no profile table yet */ }
