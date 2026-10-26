@@ -1,7 +1,6 @@
 import { Link } from 'react-router-dom';
 import { ArrowRight, CheckCircle2, Clock3, FileText, LoaderCircle } from 'lucide-react';
 import assessmentsData from '@/data/departmentalAssessments.json';
-import { getEmployeeSessionNumber } from '@/lib/constants';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSessionAssessments } from '@/hooks/useSessionAssessments';
 import type { DepartmentalAssessment } from '@/types/departmentalAssessment';
@@ -13,8 +12,6 @@ const assessments = assessmentsData as unknown as DepartmentalAssessment[];
 export default function EmployeeDashboard() {
   const { user } = useAuth();
   const { attempts, isLoading } = useSessionAssessments(user);
-  const assignedSessionNumber = getEmployeeSessionNumber(user?.departmentId, user?.departmentCode);
-  const assignedAssessments = assessments.filter((assessment) => assessment.number === assignedSessionNumber);
 
   if (isLoading) return <LoadingScreen />;
 
@@ -24,11 +21,11 @@ export default function EmployeeDashboard() {
         <p className="text-xs font-bold uppercase tracking-widest text-brand-gold mb-2">SUROJ × BE10X · Employee Portal</p>
         <h1 className="text-3xl font-bold text-brand-navy">Welcome, {user?.name?.split(' ')[0] ?? 'Colleague'}</h1>
         <h2 className="text-lg font-semibold text-brand-charcoal mt-5">Choose an Assessment Session</h2>
-        <p className="text-sm text-brand-muted mt-1">Your assigned department assessment session is ready to complete.</p>
+        <p className="text-sm text-brand-muted mt-1">All six department assessment sessions are available to complete.</p>
       </div>
 
       <div className="grid md:grid-cols-2 gap-x-8 gap-y-0">
-        {assignedAssessments.map((assessment) => {
+        {assessments.map((assessment) => {
           const attempt = attempts.find((item) => item.sessionNumber === assessment.number);
           const completed = attempt?.status === 'submitted';
           const inProgress = attempt?.status === 'in_progress';
@@ -59,7 +56,6 @@ export default function EmployeeDashboard() {
             </Link>
           );
         })}
-        {assignedAssessments.length === 0 && <p role="alert" className="text-sm text-warning-700 py-6">Your employee profile does not have a recognized assessment department. Contact your administrator to update your profile.</p>}
       </div>
     </EmployeeLayout>
   );
