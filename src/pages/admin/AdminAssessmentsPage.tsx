@@ -4,6 +4,7 @@ import type { DepartmentalAssessment } from '@/types/departmentalAssessment';
 import AdminLayout from '@/components/layout/AdminLayout';
 import EmptyState from '@/components/ui/EmptyState';
 import LoadingScreen from '@/components/ui/LoadingScreen';
+import { DEPARTMENTS } from '@/lib/constants';
 import { ClipboardCheck } from 'lucide-react';
 
 const assessments = assessmentsData as unknown as DepartmentalAssessment[];
@@ -23,7 +24,7 @@ export default function AdminAssessmentsPage() {
         {assessments.map((assessment) => {
           const departmentCode = ['EPC', 'ACC', 'PAC', 'CPS', 'PRO', 'DDQ'][assessment.number - 1];
           const department = departments.find((item) => item.code === departmentCode)
-            ?? Object.values(DEPARTMENT_MAP).find((item) => item.code === departmentCode);
+            ?? DEPARTMENTS.find((item) => item.code === departmentCode);
           const sessionAttempts = attempts.filter((attempt) => (
             attempt.sessionNumber === assessment.number
             || (department && attempt.departmentId === department.id)
