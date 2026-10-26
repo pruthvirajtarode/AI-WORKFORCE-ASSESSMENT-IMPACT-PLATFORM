@@ -23,9 +23,10 @@ import NotFoundPage from '@/pages/NotFoundPage';
 import LoadingScreen from '@/components/ui/LoadingScreen';
 
 function ProtectedEmployee({ children }: { children: React.ReactNode }) {
-  const { user, isLoading } = useAuth();
+  const { user, isLoading, isEmployee } = useAuth();
   if (isLoading) return <LoadingScreen />;
   if (!user) return <Navigate to={ROUTES.login} replace />;
+  if (!isEmployee) return <Navigate to={ROUTES.adminDashboard} replace />;
   return <>{children}</>;
 }
 
