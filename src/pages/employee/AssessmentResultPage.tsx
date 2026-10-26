@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, CheckCircle2, Clock3, Home } from 'lucide-react';
 import assessmentsData from '@/data/departmentalAssessments.json';
-import { getEmployeeSessionNumber, ROUTES } from '@/lib/constants';
+import { ROUTES } from '@/lib/constants';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSessionAssessments } from '@/hooks/useSessionAssessments';
 import type { DepartmentalAssessment } from '@/types/departmentalAssessment';
@@ -18,7 +18,6 @@ export default function AssessmentResultPage() {
   const assessment = assessments.find((item) => item.number === sessionNumber);
   const { user } = useAuth();
   const { attempts, isLoading } = useSessionAssessments(user);
-  const assignedSessionNumber = getEmployeeSessionNumber(user?.departmentId, user?.departmentCode);
   const navigate = useNavigate();
   const attempt = attempts.find((item) => item.id === attemptId && item.sessionNumber === sessionNumber);
   const resultLevel = attempt?.percentage === null || attempt?.percentage === undefined
@@ -26,10 +25,10 @@ export default function AssessmentResultPage() {
     : AI_READINESS_CONFIG[getAIReadinessLevel(attempt.percentage)];
 
   useEffect(() => {
-    if (!isLoading && (!attempt || attempt.status !== 'submitted' || sessionNumber !== assignedSessionNumber)) {
+    if (!isLoading && (!assessment || !attempt || attempt.status !== 'submitted')) {
       navigate(attempt ? `/employee/sessions/${sessionNumber}/assessment/${attempt.id}` : ROUTES.employeeDashboard, { replace: true });
     }
-  }, [assignedSessionNumber, attempt, isLoading, navigate, sessionNumber]);
+  }, [assessment, attempt, isLoading, navigate, sessionNumber]);
 
   if (isLoading) return <LoadingScreen />;
   if (!assessment || !attempt) return null;
