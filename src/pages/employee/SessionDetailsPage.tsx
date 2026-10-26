@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, ArrowRight, CheckCircle2, Clock3, FileText, ShieldCheck } from 'lucide-react';
 import assessmentsData from '@/data/departmentalAssessments.json';
-import { getEmployeeSessionNumber, ROUTES } from '@/lib/constants';
+import { ROUTES } from '@/lib/constants';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSessionAssessments } from '@/hooks/useSessionAssessments';
 import type { DepartmentalAssessment } from '@/types/departmentalAssessment';
@@ -17,14 +17,13 @@ export default function SessionDetailsPage() {
   const assessment = assessments.find((item) => item.number === sessionNumber);
   const { user } = useAuth();
   const { attempts, isLoading, startAttempt } = useSessionAssessments(user);
-  const assignedSessionNumber = getEmployeeSessionNumber(user?.departmentId, user?.departmentCode);
   const navigate = useNavigate();
   const [starting, setStarting] = useState(false);
   const [startError, setStartError] = useState('');
   const attempt = useMemo(() => attempts.find((item) => item.sessionNumber === sessionNumber), [attempts, sessionNumber]);
 
   if (isLoading) return <LoadingScreen />;
-  if (!assessment || assessment.number !== assignedSessionNumber) {
+  if (!assessment) {
     return <EmployeeLayout><p className="text-sm text-brand-muted">Assessment session not found.</p></EmployeeLayout>;
   }
 
