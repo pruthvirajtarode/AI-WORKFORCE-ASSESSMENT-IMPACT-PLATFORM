@@ -57,10 +57,10 @@ export default function LandingPage() {
               Admin
             </Link>
             <Link
-              to={ROUTES.login}
+              to={ROUTES.employeeOnboarding}
               className="btn btn-sm bg-brand-gold text-brand-navy hover:bg-brand-gold-dark font-semibold no-underline"
             >
-              Employee Login
+              Start Assessment
             </Link>
           </div>
         </div>
@@ -82,7 +82,7 @@ export default function LandingPage() {
         </p>
         <div className="flex flex-col sm:flex-row items-center gap-4 justify-center">
           <Link
-            to={ROUTES.login}
+            to={ROUTES.employeeOnboarding}
             className="btn bg-brand-gold text-brand-navy hover:bg-brand-gold-dark font-semibold btn-lg w-full sm:w-auto no-underline"
           >
             Start Your Assessment
@@ -156,9 +156,9 @@ export default function LandingPage() {
         <div className="max-w-6xl mx-auto px-6 py-12 text-center">
           <Star className="w-8 h-8 text-brand-gold mx-auto mb-4" />
           <h2 className="text-2xl font-bold text-white mb-3">Ready to Measure Your AI Readiness?</h2>
-          <p className="text-white/50 mb-6 text-sm">Use your employee ID provided by Suroj Buildcon HR to begin</p>
+          <p className="text-white/50 mb-6 text-sm">Enter your name and department to begin</p>
           <Link
-            to={ROUTES.login}
+            to={ROUTES.employeeOnboarding}
             className="btn bg-brand-gold text-brand-navy hover:bg-brand-gold-dark font-semibold btn-lg no-underline"
           >
             Begin Assessment <ArrowRight className="w-5 h-5" />
