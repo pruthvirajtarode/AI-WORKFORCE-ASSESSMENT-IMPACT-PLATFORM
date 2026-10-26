@@ -299,7 +299,7 @@ export function useAdminData() {
       id: attempt.id,
       name: attempt.employeeName,
       email: attempt.employeeEmail,
-      employeeId: attempt.employeeCode,
+      employeeId: attempt.employeeCode,       sessionNumber: attempt.sessionNumber,       assessmentTitle: attempt.assessmentTitle,
       departmentId: attempt.departmentId ?? '',
       role: attempt.employeeRole,
       postScore: attempt.percentage,
