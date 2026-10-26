@@ -51,7 +51,7 @@ export default function AssessmentResultPage() {
               {resultLevel && <p className={`text-sm font-semibold mt-2 ${resultLevel.color}`}>{resultLevel.label}</p>}
             </div>
           ) : (
-            <p className="text-sm text-brand-muted mt-5">Status: submitted · awaiting trainer evaluation</p>
+            <p className="text-sm text-brand-muted mt-5">Status: submitted · Submission recorded. Your responses are available to the assessment team; a numeric score is not configured for this session.</p>
           )}
           <div className="flex items-center gap-2 text-sm text-brand-charcoal mt-6 pt-5 border-t border-brand-border">
             <Clock3 className="w-4 h-4 text-brand-muted" />
