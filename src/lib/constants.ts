@@ -133,6 +133,7 @@ export const APP_CONFIG = {
 export const ROUTES = {
   home: '/',
   login: '/login',
+  employeeOnboarding: '/employee/start',
   adminLogin: '/admin/login',
   employeeDashboard: '/employee/dashboard',
   employeeSessionDetails: '/employee/sessions/:sessionNumber',
