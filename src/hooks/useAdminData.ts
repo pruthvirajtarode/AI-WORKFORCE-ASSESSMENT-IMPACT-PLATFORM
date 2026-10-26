@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
 import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 import { DEPARTMENTS } from '@/lib/constants';
 import { getAIReadinessLevel } from '@/lib/utils';
@@ -85,7 +86,83 @@ function emptyDistribution() {
   return { needs_development: 0, developing: 0, operational: 0, advanced: 0, ai_leader: 0 };
 }
 
+function readDemoAdminData() {
+  const employeesById = new Map<string, MockEmployee>();
+  try {
+    const profiles = JSON.parse(localStorage.getItem('suroj_demo_employee_profiles_v1') ?? '[]') as MockEmployee[];
+    for (const profile of profiles) employeesById.set(profile.id, profile);
+  } catch { /* Ignore invalid local demo profiles. */ }
+
+  const localAttempts: SessionAttempt[] = [];
+  for (let index = 0; index < localStorage.length; index += 1) {
+    const key = localStorage.key(index);
+    if (!key?.startsWith('suroj_session_attempts_v1:')) continue;
+    try {
+      const attempts = JSON.parse(localStorage.getItem(key) ?? '[]') as SessionAttempt[];
+      if (Array.isArray(attempts)) localAttempts.push(...attempts);
+    } catch { /* Ignore invalid local demo attempts. */ }
+  }
+
+  const attempts: AdminAssessmentAttempt[] = localAttempts.map((attempt) => {
+    const profile = employeesById.get(attempt.employeeUserId);
+    const employeeId = profile?.id ?? attempt.employeeId ?? attempt.employeeUserId;
+    const employee = profile ?? {
+      id: employeeId,
+      name: attempt.employeeUserId === 'demo-emp-001' ? 'Demo Employee' : 'Suroj Employee',
+      email: attempt.employeeUserId === 'demo-emp-001' ? 'demo@surojbuildcon.com' : '',
+      employeeId: 'SRJ-DEMO',
+      departmentId: attempt.departmentId ?? DEPARTMENTS[0].id,
+      role: 'Employee',
+      status: 'active' as const,
+      postScore: null,
+      postSubmittedAt: null,
+      postTimeTaken: null,
+      trainerMarks: null,
+      finalScore: null,
+    };
+    employeesById.set(employee.id, employee);
+    return {
+      ...attempt,
+      employeeId: employee.id,
+      departmentId: attempt.departmentId ?? employee.departmentId,
+      employeeName: employee.name,
+      employeeEmail: employee.email,
+      employeeCode: employee.employeeId,
+      employeeRole: employee.role,
+    };
+  });
+
+  const latestSubmitted = new Map<string, AdminAssessmentAttempt>();
+  for (const attempt of attempts) {
+    if (attempt.status !== 'submitted' || !attempt.employeeId) continue;
+    const previous = latestSubmitted.get(attempt.employeeId);
+    if (!previous || (attempt.submittedAt ?? '').localeCompare(previous.submittedAt ?? '') > 0) {
+      latestSubmitted.set(attempt.employeeId, attempt);
+    }
+  }
+
+  const employees = [...employeesById.values()].map((employee) => {
+    const latest = latestSubmitted.get(employee.id);
+    const score = latest?.percentage ?? null;
+    return {
+      ...employee,
+      postScore: score,
+      postSubmittedAt: latest?.submittedAt ?? null,
+      postTimeTaken: latest?.timeTakenSeconds ?? null,
+      trainerMarks: latest?.evaluationStatus === 'evaluated' ? score : null,
+      finalScore: score,
+    };
+  });
+
+  return {
+    employees,
+    attempts,
+    departments: DEPARTMENTS.map(({ id, name, code }) => ({ id, name, code })),
+  };
+}
+
 export function useAdminData() {
+  const { user } = useAuth();
   const [employees, setEmployees] = useState<MockEmployee[]>([]);
   const [attempts, setAttempts] = useState<AdminAssessmentAttempt[]>([]);
   const [departments, setDepartments] = useState<AdminDepartment[]>([]);
@@ -93,6 +170,16 @@ export function useAdminData() {
   const [hasError, setHasError] = useState(false);
 
   const refresh = useCallback(async () => {
+    if (user?.id === 'demo-admin-001') {
+      const demoData = readDemoAdminData();
+      setEmployees(demoData.employees);
+      setAttempts(demoData.attempts);
+      setDepartments(demoData.departments);
+      setHasError(false);
+      setIsLoading(false);
+      return;
+    }
+
     if (!isSupabaseConfigured) {
       setEmployees([]);
       setAttempts([]);
@@ -170,7 +257,7 @@ export function useAdminData() {
     setAttempts(loadedAttempts);
     setDepartments(departmentCatalog);
     setIsLoading(false);
-  }, []);
+  }, [user?.id]);
 
   useEffect(() => { void refresh(); }, [refresh]);
 
