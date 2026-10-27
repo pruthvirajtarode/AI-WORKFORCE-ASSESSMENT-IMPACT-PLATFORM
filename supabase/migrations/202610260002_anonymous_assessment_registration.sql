@@ -1,3 +1,8 @@
+-- Ensure employees table has status and role columns
+alter table public.employees
+  add column if not exists status text default 'active',
+  add column if not exists role text default 'Employee';
+
 create or replace function public.register_assessment_guest(
   p_name text,
   p_department_code text
