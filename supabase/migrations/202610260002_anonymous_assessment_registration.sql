@@ -54,16 +54,14 @@ begin
     resolved_employee_code := 'GUEST-' || upper(substr(replace(guest_user_id::text, '-', ''), 1, 10));
 
     insert into public.employees (
-      employee_id, name, email, phone, role, department_id, status, is_demo
+      employee_id, name, email, department_id, role, status
     ) values (
       resolved_employee_code,
       trim(p_name),
       'guest+' || replace(guest_user_id::text, '-', '') || '@assessment.surojbuildcon.com',
-      null,
-      'Employee',
       resolved_department_id,
-      'active',
-      false
+      'Employee',
+      'active'
     )
     returning id into resolved_employee_id;
 
