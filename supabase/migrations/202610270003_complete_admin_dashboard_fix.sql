@@ -1,5 +1,5 @@
--- 1. Temporarily disable triggers so the backfill can run without immutable check
-alter table public.assessment_attempts disable trigger all;
+-- 1. Drop the immutable trigger directly (does not touch system triggers)
+drop trigger if exists protect_assessment_attempt_identity on public.assessment_attempts;
 
 -- 2. Link your submitted attempt to the employee record
 update public.assessment_attempts as attempt
@@ -39,20 +39,17 @@ alter table public.assessment_attempts
   add column if not exists time_taken_seconds integer,
   add column if not exists answers jsonb default '{}'::jsonb;
 
--- 5. Drop the immutable trigger so it does not block updates
-drop trigger if exists protect_assessment_attempt_identity on public.assessment_attempts;
-
--- 6. Grant full table permissions
+-- 5. Grant full table permissions
 grant all on public.departments to authenticated, anon;
 grant all on public.employees to authenticated, anon;
 grant all on public.profiles to authenticated, anon;
 grant all on public.assessment_attempts to authenticated, anon;
 
--- 7. Disable RLS completely so queries are never blocked
+-- 6. Disable RLS completely so queries are never blocked
 alter table public.departments disable row level security;
 alter table public.employees disable row level security;
 alter table public.profiles disable row level security;
 alter table public.assessment_attempts disable row level security;
 
--- 8. Refresh PostgREST API schema cache
+-- 7. Refresh PostgREST API schema cache
 notify pgrst, 'reload schema';
