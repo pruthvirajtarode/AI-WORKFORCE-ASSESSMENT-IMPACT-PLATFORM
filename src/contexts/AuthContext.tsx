@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import type { Session } from '@supabase/supabase-js';
-import { supabase } from '@/lib/supabase';
+import { isSupabaseConfigured, supabase } from '@/lib/supabase';
 import type { UserRole } from '@/types';
 import { DEPARTMENTS } from '@/lib/constants';
 
@@ -22,6 +22,7 @@ interface AuthContextValue {
   isLoading: boolean;
   isAdmin: boolean;
   isEmployee: boolean;
+  registerGuest: (name: string, departmentCode: string) => Promise<{ error: string | null }>;
   signIn: (email: string, password: string) => Promise<{ error: string | null }>;
   signOut: () => Promise<void>;
   refreshUser: () => Promise<void>;
@@ -175,6 +176,70 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const registerGuest = async (name: string, departmentCode: string): Promise<{ error: string | null }> => {
+    const cleanName = name.trim();
+    const department = DEPARTMENTS.find((item) => item.code === departmentCode);
+    if (cleanName.length < 2 || cleanName.length > 100) return { error: 'Enter a name between 2 and 100 characters.' };
+    if (!department) return { error: 'Choose a valid department.' };
+
+    if (!isSupabaseConfigured) {
+      const guestUser: AuthUser = {
+        id: `demo-guest-${crypto.randomUUID()}`,
+        email: '',
+        role: 'employee',
+        employeeId: `SRJ-${crypto.randomUUID().slice(0, 8).toUpperCase()}`,
+        name: cleanName,
+        departmentId: department.id,
+        departmentName: department.name,
+        departmentCode: department.code,
+      };
+      saveDemoUser(guestUser);
+      saveDemoEmployeeProfile(guestUser);
+      setUser(guestUser);
+      return { error: null };
+    }
+
+    try {
+      const { data: authData, error: authError } = await supabase.auth.signInAnonymously();
+      if (authError || !authData.user) {
+        return { error: authError?.message ?? 'Could not create an assessment session.' };
+      }
+
+      const { data, error } = await supabase.rpc('register_assessment_guest', {
+        p_name: cleanName,
+        p_department_code: department.code,
+      });
+      if (error) {
+        await supabase.auth.signOut();
+        return { error: error.message };
+      }
+
+      const registration = Array.isArray(data) ? data[0] : data;
+      if (!registration?.employee_db_id) {
+        await supabase.auth.signOut();
+        return { error: 'The assessment profile could not be created.' };
+      }
+
+      const guestUser: AuthUser = {
+        id: authData.user.id,
+        email: '',
+        role: 'employee',
+        employeeId: String(registration.employee_code),
+        employeeDbId: String(registration.employee_db_id),
+        name: cleanName,
+        departmentId: String(registration.department_id),
+        departmentName: String(registration.department_name),
+        departmentCode: String(registration.department_code),
+      };
+      setSession(authData.session);
+      setUser(guestUser);
+      return { error: null };
+    } catch {
+      await supabase.auth.signOut();
+      return { error: 'Unable to reach the assessment service. Please try again.' };
+    }
+  };
+
   const signIn = async (email: string, password: string): Promise<{ error: string | null }> => {
     const lower = email.toLowerCase().trim();
 
@@ -182,7 +247,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const isAdminEmail = lower === 'admin@surojbuildcon.com';
     const correctPwd = isAdminEmail ? DEMO_ADMIN_PASSWORD : DEMO_PASSWORD;
 
-    if (password === correctPwd) {
+    if (!isSupabaseConfigured && password === correctPwd) {
       let demoUser = DEMO_USERS[lower];
       if (!demoUser && lower.endsWith('@surojbuildcon.com')) {
         // Any company email → demo employee
@@ -226,6 +291,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       user, session, isLoading,
       isAdmin: user?.role === 'admin',
       isEmployee: user?.role === 'employee',
+      registerGuest,
       signIn, signOut, refreshUser,
     }}>
       {children}

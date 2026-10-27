@@ -22,6 +22,7 @@ export default function EmployeeDashboard() {
         <h1 className="text-3xl font-bold text-brand-navy">Welcome, {user?.name?.split(' ')[0] ?? 'Colleague'}</h1>
         <h2 className="text-lg font-semibold text-brand-charcoal mt-5">Choose an Assessment Session</h2>
         <p className="text-sm text-brand-muted mt-1">All six department assessment sessions are available to complete.</p>
+        {user?.departmentName && <p className="text-xs text-brand-muted mt-2">Department: {user.departmentName}</p>}
       </div>
 
       <div className="grid md:grid-cols-2 gap-x-8 gap-y-0">

@@ -162,7 +162,7 @@ export default function AdminDashboard() {
               const score = emp.finalScore;
               const config = score === null ? null : AI_READINESS_CONFIG[getAIReadinessLevel(score)];
               return (
-                <div key={emp.id} className="px-5 py-3.5 flex items-center gap-3 hover:bg-brand-cream/40 transition-colors">
+                <Link key={emp.id} to={`/admin/employees/${emp.id}`} className="px-5 py-3.5 flex items-center gap-3 no-underline hover:bg-brand-cream/40 transition-colors">
                   <div className="w-8 h-8 rounded-lg gradient-navy flex items-center justify-center shrink-0">
                     <span className="text-white text-xs font-bold">{emp.name.split(' ').map((n) => n[0]).join('').slice(0, 2)}</span>
                   </div>
@@ -176,7 +176,7 @@ export default function AdminDashboard() {
                       <div className="text-xs text-brand-muted">Evaluated</div>
                     )}
                   </div>
-                </div>
+                </Link>
               );
             })}
             {recentSubmissions.length === 0 && <EmptyState icon={ClipboardList} title="No submissions yet" description="Recent employee submissions will appear here." />}

@@ -1,11 +1,10 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { ArrowLeft, Building2, Download, FileText, Mail, Printer, RefreshCw } from 'lucide-react';
 import assessmentsData from '@/data/departmentalAssessments.json';
 import { DEPARTMENT_MAP, ROUTES } from '@/lib/constants';
 import { useAdminData } from '@/hooks/useAdminData';
 import { formatDateTime, formatDuration, getAIReadinessLevel, AI_READINESS_CONFIG } from '@/lib/utils';
-import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 import type { DepartmentalAssessment } from '@/types/departmentalAssessment';
 import AdminLayout from '@/components/layout/AdminLayout';
 import EmptyState from '@/components/ui/EmptyState';
@@ -23,20 +22,11 @@ export default function AdminEmployeeDetailPage() {
   const { id } = useParams<{ id: string }>();
   const { employees, attempts, departments, isLoading, hasError, refresh } = useAdminData();
   const [selectedAttemptId, setSelectedAttemptId] = useState('');
-  const [scoreInput, setScoreInput] = useState('');
-  const [evaluationError, setEvaluationError] = useState('');
-  const [evaluationSaved, setEvaluationSaved] = useState(false);
   const employee = employees.find((item) => item.id === id);
   const employeeAttempts = useMemo(() => attempts
     .filter((attempt) => attempt.employeeId === id)
     .sort((a, b) => (b.submittedAt ?? b.startedAt).localeCompare(a.submittedAt ?? a.startedAt)), [attempts, id]);
   const selectedAttempt = employeeAttempts.find((attempt) => attempt.id === selectedAttemptId) ?? employeeAttempts[0];
-
-  useEffect(() => {
-    setScoreInput(selectedAttempt?.rawScore === null || selectedAttempt?.rawScore === undefined ? '' : String(selectedAttempt.rawScore));
-    setEvaluationError('');
-    setEvaluationSaved(false);
-  }, [selectedAttempt]);
 
   if (isLoading) return <LoadingScreen />;
   if (!employee) {
@@ -56,44 +46,11 @@ export default function AdminEmployeeDetailPage() {
       const rendered = typeof answer === 'string' ? answer : JSON.stringify(answer);
       return `<tr><td>${escapeHtml(questionId)}</td><td>${escapeHtml(rendered)}</td></tr>`;
     }).join('');
-    const printable = `<!doctype html><html><head><meta charset="utf-8"><title>Assessment Result - ${escapeHtml(employee.name)}</title><style>body{font:14px Arial,sans-serif;color:#222;max-width:900px;margin:40px auto}h1{font-size:22px}h2{font-size:16px;margin-top:28px}.meta{display:grid;grid-template-columns:1fr 1fr;gap:10px}.meta div{border-bottom:1px solid #ddd;padding:8px 0}table{border-collapse:collapse;width:100%;margin-top:12px}th,td{border:1px solid #ccc;padding:8px;text-align:left;vertical-align:top;white-space:pre-wrap}button{padding:10px 16px}@media print{button{display:none}body{margin:0 auto}}</style></head><body><button onclick="window.print()">Print / Save as PDF</button><h1>SUROJ × BE10X Assessment Result</h1><div class="meta"><div><b>Employee</b><br>${escapeHtml(employee.name)}</div><div><b>Employee ID</b><br>${escapeHtml(employee.employeeId)}</div><div><b>Email</b><br>${escapeHtml(employee.email)}</div><div><b>Department</b><br>${escapeHtml(department?.name ?? employee.departmentId)}</div><div><b>Assessment</b><br>${escapeHtml(selectedAttempt.assessmentTitle)}</div><div><b>Attempt</b><br>${selectedAttempt.attemptNumber}</div><div><b>Submitted</b><br>${escapeHtml(selectedAttempt.submittedAt ? formatDateTime(selectedAttempt.submittedAt) : 'In progress')}</div><div><b>Time taken</b><br>${selectedAttempt.timeTakenSeconds === null ? '—' : escapeHtml(formatDuration(selectedAttempt.timeTakenSeconds))}</div><div><b>Result</b><br>${selectedAttempt.rawScore ?? 'Pending'} / ${selectedAttempt.maximumScore ?? '—'}</div><div><b>Percentage</b><br>${selectedAttempt.percentage === null ? 'Not auto-scored' : `${selectedAttempt.percentage.toFixed(1)}%`}</div><div><b>Evaluation status</b><br>${escapeHtml(selectedAttempt.evaluationStatus)}</div>${readiness ? `<div><b>Readiness</b><br>${escapeHtml(readiness.label)}</div>` : ''}</div><h2>Submitted responses</h2><table><thead><tr><th>Question ID</th><th>Response</th></tr></thead><tbody>${answerRows}</tbody></table><script>window.addEventListener('load',()=>window.print())</script></body></html>`;
+    const printable = `<!doctype html><html><head><meta charset="utf-8"><title>Assessment Result - ${escapeHtml(employee.name)}</title><style>body{font:14px Arial,sans-serif;color:#222;max-width:900px;margin:40px auto}h1{font-size:22px}h2{font-size:16px;margin-top:28px}.meta{display:grid;grid-template-columns:1fr 1fr;gap:10px}.meta div{border-bottom:1px solid #ddd;padding:8px 0}table{border-collapse:collapse;width:100%;margin-top:12px}th,td{border:1px solid #ccc;padding:8px;text-align:left;vertical-align:top;white-space:pre-wrap}button{padding:10px 16px}@media print{button{display:none}body{margin:0 auto}}</style></head><body><button onclick="window.print()">Print / Save as PDF</button><h1>SUROJ × BE10X Assessment Result</h1><div class="meta"><div><b>Employee</b><br>${escapeHtml(employee.name)}</div><div><b>Employee ID</b><br>${escapeHtml(employee.employeeId)}</div><div><b>Email</b><br>${escapeHtml(employee.email)}</div><div><b>Department</b><br>${escapeHtml(department?.name ?? employee.departmentId)}</div><div><b>Assessment</b><br>${escapeHtml(selectedAttempt.assessmentTitle)}</div><div><b>Attempt</b><br>${selectedAttempt.attemptNumber}</div><div><b>Submitted</b><br>${escapeHtml(selectedAttempt.submittedAt ? formatDateTime(selectedAttempt.submittedAt) : 'In progress')}</div><div><b>Time taken</b><br>${selectedAttempt.timeTakenSeconds === null ? '—' : escapeHtml(formatDuration(selectedAttempt.timeTakenSeconds))}</div><div><b>Result</b><br>${selectedAttempt.rawScore ?? 'Pending'} / ${selectedAttempt.maximumScore ?? '—'}</div><div><b>Percentage</b><br>${selectedAttempt.percentage === null ? 'Pending evaluation' : `${selectedAttempt.percentage.toFixed(1)}%`}</div><div><b>Evaluation status</b><br>${escapeHtml(selectedAttempt.evaluationStatus)}</div>${readiness ? `<div><b>Readiness</b><br>${escapeHtml(readiness.label)}</div>` : ''}</div><h2>Submitted responses</h2><table><thead><tr><th>Question ID</th><th>Response</th></tr></thead><tbody>${answerRows}</tbody></table><script>window.addEventListener('load',()=>window.print())</script></body></html>`;
     const blob = new Blob([printable], { type: 'text/html' });
     const url = URL.createObjectURL(blob);
     const resultWindow = window.open(url, '_blank', 'noopener,noreferrer');
     if (!resultWindow) URL.revokeObjectURL(url);
-  };
-
-  const saveEvaluation = async () => {
-    if (!selectedAttempt || selectedAttempt.status !== 'submitted') return;
-    if (!isSupabaseConfigured) {
-      setEvaluationError('Supabase is not configured; evaluation cannot be saved.');
-      return;
-    }
-    const rawScore = Number(scoreInput);
-    const maximumScore = selectedAttempt.maximumScore;
-    if (maximumScore === null || !Number.isFinite(maximumScore) || maximumScore <= 0) {
-      setEvaluationError('This attempt has no valid maximum score.');
-      return;
-    }
-    if (!Number.isFinite(rawScore) || rawScore < 0 || rawScore > maximumScore) {
-      setEvaluationError(`Enter a score between 0 and ${maximumScore}.`);
-      return;
-    }
-
-    const percentage = Math.round((rawScore / maximumScore) * 10000) / 100;
-    const { data, error } = await supabase.from('assessment_attempts')
-      .update({ raw_score: rawScore, percentage, evaluation_status: 'evaluated', updated_at: new Date().toISOString() })
-      .eq('id', selectedAttempt.id)
-      .eq('status', 'submitted')
-      .select('id, raw_score, percentage, evaluation_status')
-      .single();
-    if (error || data?.evaluation_status !== 'evaluated') {
-      console.error('[Assessment evaluation] Could not save evaluation', error);
-      setEvaluationError('The score could not be saved. Verify admin access and the applied database migration.');
-      return;
-    }
-    setEvaluationSaved(true);
-    await refresh();
   };
 
   return (
@@ -137,9 +94,8 @@ export default function AdminEmployeeDetailPage() {
               <div><div className="kpi-label">Duration</div><div className="font-semibold text-brand-navy mt-1">{selectedAttempt.timeTakenSeconds === null ? '—' : formatDuration(selectedAttempt.timeTakenSeconds)}</div></div>
             </div>
             {readiness && <div className="mt-5"><span className={`badge ${readiness.bgColor} ${readiness.color}`}>{readiness.label}</span></div>}
-            {selectedAttempt.status === 'submitted' && selectedAttempt.evaluationStatus === 'pending' && <p className="text-xs text-brand-muted mt-5">Submission recorded automatically. A numeric score is unavailable because this application has no configured answer key.</p>}
+            {selectedAttempt.status === 'submitted' && selectedAttempt.rawScore === null && <p className="text-xs text-brand-muted mt-5">Submission recorded automatically. Submitted answers are shown below; a numeric score is unavailable because answer keys are not configured in this application.</p>}
           </div>
-          
           <section className="card p-6">
             <h2 className="font-semibold text-brand-navy mb-4">Submitted responses</h2>
             <div className="divide-y divide-brand-border">

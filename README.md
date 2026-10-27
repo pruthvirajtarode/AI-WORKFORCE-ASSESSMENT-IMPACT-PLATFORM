@@ -12,16 +12,17 @@ A production-ready, enterprise-grade AI workforce assessment and analytics platf
 
 | Portal | Email | Password |
 |--------|-------|----------|
-| Employee | `demo@surojbuildcon.com` | `Demo@2024` |
 | Admin | `admin@surojbuildcon.com` | `Admin@2024` |
 
-Any `@surojbuildcon.com` email with password `Demo@2024` works as an employee login.
+These admin demo credentials work only when Supabase is not configured. With Supabase enabled, use an administrator account provisioned in that Supabase project.
+
+Employees do not need an account or password. They select **Start Assessment**, enter their name and department, then choose one of the six assessment sessions.
 
 ---
 
 ## 🎯 Purpose
 
-The employee portal provides six separate, department-specific assessment sessions from the six source HTML files in the project root. Employees sign in, select a session, review its instructions and start only that session. Each session is a one-attempt, 30-minute assessment; progress is saved per employee and session.
+The employee portal provides six assessment sessions from the six source HTML files in the project root. Employees enter their name and department, select a session, review its instructions, and start the assessment. Each employee can submit each session once; progress is saved per employee and session.
 
 ---
 
@@ -92,11 +93,11 @@ src/
 
 The original assessment HTML files are authoritative. `npm run dev` and `npm run build` extract their assessment titles, section briefs, questions, options, IDs, optional/manual markers, scoring identifiers and source timer into `src/data/departmentalAssessments.json`; do not edit that generated file by hand. The source files intentionally keep trainer answer keys in their external trainer-only store, so answer keys are not bundled into the employee app.
 
-Attempts are keyed by authenticated employee and session. Browser storage provides immediate draft recovery; authenticated Supabase users also save answers and submission status to `public.assessment_attempts`.
+Attempts are keyed by the guest employee profile and session. Browser storage provides immediate draft recovery; when Supabase is configured, anonymous employee sessions save profiles, answers, and submission status to `public.assessment_attempts`, where administrators can review them from another device.
 
 ### Supabase setup
 
-Apply both migrations in `supabase/migrations/` to the Supabase project, then configure `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`. The second migration links attempts to the existing employee/profile records, adds pending/evaluated result fields, enforces department-to-session matching on insert, and grants administrator-only result reads/evaluation updates through RLS. Demo sign-ins use per-user browser storage and do not write demo identities to Supabase.
+Apply all migrations in `supabase/migrations/` to the Supabase project in filename order, then configure `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`. These migrations create assessment attempts, support guest employee registration, allow employees to take the six sessions, and grant administrator-only result reads/evaluation updates through RLS. Demo mode uses per-browser storage and does not share employee records with Supabase.
 
 The admin dashboard, employee list, submission list, analytics, and employee result detail now read live Supabase data and show empty states when no records exist. Trainer evaluation is an explicit admin action because the source HTML answer keys are maintained outside this repository; the client never invents objective marks.
 
@@ -123,7 +124,7 @@ VITE_SUPABASE_URL=https://your-project.supabase.co
 VITE_SUPABASE_ANON_KEY=your-anon-key
 ```
 
-> Without these, the platform runs in **demo mode** with local authentication and question banks.
+> Without these, the platform runs in **browser-only demo mode**. Employee profiles and submissions are not shared with administrators on other devices. Configure Supabase and apply the repository migrations for shared employee records and results.
 
 ### 4. Deploy
 
