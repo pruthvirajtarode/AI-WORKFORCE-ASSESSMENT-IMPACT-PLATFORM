@@ -40,17 +40,139 @@ export default function AdminEmployeeDetailPage() {
     ? null
     : AI_READINESS_CONFIG[getAIReadinessLevel(selectedAttempt.percentage)];
 
+  const buildPrintableHtml = () => {
+    if (!selectedAttempt) return '';
+    const answerRows = Object.entries(selectedAttempt.answers).map(([questionId, answer]) => {
+      const rendered = typeof answer === 'string' ? answer : JSON.stringify(answer, null, 2);
+      return `<tr><td style="font-family:monospace;font-size:12px;background:#f8fafc;font-weight:600">${escapeHtml(questionId)}</td><td>${escapeHtml(rendered)}</td></tr>`;
+    }).join('');
+
+    return `<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Assessment Result - ${escapeHtml(employee.name)}</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; color: #1e293b; max-width: 900px; margin: 40px auto; padding: 0 24px; line-height: 1.5; }
+    h1 { font-size: 24px; color: #0f172a; margin-bottom: 4px; }
+    .subtitle { color: #64748b; font-size: 14px; margin-bottom: 24px; }
+    .meta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; margin: 20px 0; }
+    .meta-item { display: flex; flex-direction: column; }
+    .meta-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: #64748b; font-weight: 600; }
+    .meta-val { font-size: 14px; color: #0f172a; font-weight: 600; margin-top: 2px; }
+    table { border-collapse: collapse; width: 100%; margin-top: 16px; font-size: 13px; }
+    th, td { border: 1px solid #cbd5e1; padding: 10px 12px; text-align: left; vertical-align: top; white-space: pre-wrap; }
+    th { background: #0f172a; color: #fff; font-weight: 600; }
+    .btn-bar { margin-bottom: 24px; display: flex; gap: 10px; }
+    .btn { background: #0f172a; color: #fff; border: none; padding: 10px 18px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 14px; text-decoration: none; display: inline-block; }
+    @media print { .btn-bar { display: none !important; } body { margin: 0; padding: 0; max-width: 100%; } }
+  </style>
+</head>
+<body>
+  <div class="btn-bar">
+    <button class="btn" onclick="window.print()">🖨️ Print / Save as PDF</button>
+  </div>
+  <h1>SUROJ × BE10X Assessment Result</h1>
+  <div class="subtitle">Workforce Assessment & Impact Platform</div>
+  
+  <div class="meta-grid">
+    <div class="meta-item"><span class="meta-label">Employee</span><span class="meta-val">${escapeHtml(employee.name)}</span></div>
+    <div class="meta-item"><span class="meta-label">Employee ID</span><span class="meta-val">${escapeHtml(employee.employeeId)}</span></div>
+    <div class="meta-item"><span class="meta-label">Email</span><span class="meta-val">${escapeHtml(employee.email)}</span></div>
+    <div class="meta-item"><span class="meta-label">Department</span><span class="meta-val">${escapeHtml(department?.name ?? employee.departmentId)}</span></div>
+    <div class="meta-item"><span class="meta-label">Assessment</span><span class="meta-val">${escapeHtml(selectedAttempt.assessmentTitle)}</span></div>
+    <div class="meta-item"><span class="meta-label">Attempt</span><span class="meta-val">#${selectedAttempt.attemptNumber}</span></div>
+    <div class="meta-item"><span class="meta-label">Submitted</span><span class="meta-val">${escapeHtml(selectedAttempt.submittedAt ? formatDateTime(selectedAttempt.submittedAt) : 'In progress')}</span></div>
+    <div class="meta-item"><span class="meta-label">Duration</span><span class="meta-val">${selectedAttempt.timeTakenSeconds === null ? '—' : escapeHtml(formatDuration(selectedAttempt.timeTakenSeconds))}</span></div>
+    <div class="meta-item"><span class="meta-label">Score</span><span class="meta-val">${selectedAttempt.rawScore ?? 'Not auto-scored'} / ${selectedAttempt.maximumScore ?? '—'}</span></div>
+    <div class="meta-item"><span class="meta-label">Percentage</span><span class="meta-val">${selectedAttempt.percentage === null ? '—' : `${selectedAttempt.percentage.toFixed(1)}%`}</span></div>
+    <div class="meta-item"><span class="meta-label">Status</span><span class="meta-val" style="text-transform: capitalize;">${escapeHtml(selectedAttempt.status)}</span></div>
+    ${readiness ? `<div class="meta-item"><span class="meta-label">Readiness</span><span class="meta-val">${escapeHtml(readiness.label)}</span></div>` : ''}
+  </div>
+
+  <h2 style="margin-top: 32px; font-size: 18px; color: #0f172a;">Submitted Responses (${Object.keys(selectedAttempt.answers).length} Questions)</h2>
+  <table>
+    <thead>
+      <tr>
+        <th style="width: 25%;">Question ID</th>
+        <th>Recorded Response</th>
+      </tr>
+    </thead>
+    <tbody>${answerRows}</tbody>
+  </table>
+</body>
+</html>`;
+  };
+
   const downloadResult = () => {
     if (!selectedAttempt) return;
-    const answerRows = Object.entries(selectedAttempt.answers).map(([questionId, answer]) => {
-      const rendered = typeof answer === 'string' ? answer : JSON.stringify(answer);
-      return `<tr><td>${escapeHtml(questionId)}</td><td>${escapeHtml(rendered)}</td></tr>`;
-    }).join('');
-    const printable = `<!doctype html><html><head><meta charset="utf-8"><title>Assessment Result - ${escapeHtml(employee.name)}</title><style>body{font:14px Arial,sans-serif;color:#222;max-width:900px;margin:40px auto}h1{font-size:22px}h2{font-size:16px;margin-top:28px}.meta{display:grid;grid-template-columns:1fr 1fr;gap:10px}.meta div{border-bottom:1px solid #ddd;padding:8px 0}table{border-collapse:collapse;width:100%;margin-top:12px}th,td{border:1px solid #ccc;padding:8px;text-align:left;vertical-align:top;white-space:pre-wrap}button{padding:10px 16px}@media print{button{display:none}body{margin:0 auto}}</style></head><body><button onclick="window.print()">Print / Save as PDF</button><h1>SUROJ × BE10X Assessment Result</h1><div class="meta"><div><b>Employee</b><br>${escapeHtml(employee.name)}</div><div><b>Employee ID</b><br>${escapeHtml(employee.employeeId)}</div><div><b>Email</b><br>${escapeHtml(employee.email)}</div><div><b>Department</b><br>${escapeHtml(department?.name ?? employee.departmentId)}</div><div><b>Assessment</b><br>${escapeHtml(selectedAttempt.assessmentTitle)}</div><div><b>Attempt</b><br>${selectedAttempt.attemptNumber}</div><div><b>Submitted</b><br>${escapeHtml(selectedAttempt.submittedAt ? formatDateTime(selectedAttempt.submittedAt) : 'In progress')}</div><div><b>Time taken</b><br>${selectedAttempt.timeTakenSeconds === null ? '—' : escapeHtml(formatDuration(selectedAttempt.timeTakenSeconds))}</div><div><b>Result</b><br>${selectedAttempt.rawScore ?? 'Pending'} / ${selectedAttempt.maximumScore ?? '—'}</div><div><b>Percentage</b><br>${selectedAttempt.percentage === null ? 'Pending evaluation' : `${selectedAttempt.percentage.toFixed(1)}%`}</div><div><b>Evaluation status</b><br>${escapeHtml(selectedAttempt.evaluationStatus)}</div>${readiness ? `<div><b>Readiness</b><br>${escapeHtml(readiness.label)}</div>` : ''}</div><h2>Submitted responses</h2><table><thead><tr><th>Question ID</th><th>Response</th></tr></thead><tbody>${answerRows}</tbody></table><script>window.addEventListener('load',()=>window.print())</script></body></html>`;
-    const blob = new Blob([printable], { type: 'text/html' });
+    const html = buildPrintableHtml();
+    const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
     const url = URL.createObjectURL(blob);
-    const resultWindow = window.open(url, '_blank', 'noopener,noreferrer');
-    if (!resultWindow) URL.revokeObjectURL(url);
+    const link = document.createElement('a');
+    link.href = url;
+    const safeName = (employee.name || 'employee').replace(/[^a-zA-Z0-9_-]/g, '_');
+    link.download = `Assessment_Result_${safeName}_Session_${selectedAttempt.sessionNumber}.html`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    setTimeout(() => URL.revokeObjectURL(url), 1500);
+  };
+
+  const printResult = () => {
+    if (!selectedAttempt) return;
+    const html = buildPrintableHtml();
+    const printWindow = window.open('', '_blank');
+    if (printWindow) {
+      printWindow.document.open();
+      printWindow.document.write(html);
+      printWindow.document.close();
+      printWindow.focus();
+      setTimeout(() => {
+        printWindow.print();
+      }, 350);
+    } else {
+      // Fallback if popup blocked: direct iframe print
+      const printFrame = document.createElement('iframe');
+      printFrame.style.position = 'fixed';
+      printFrame.style.right = '0';
+      printFrame.style.bottom = '0';
+      printFrame.style.width = '0';
+      printFrame.style.height = '0';
+      printFrame.style.border = '0';
+      document.body.appendChild(printFrame);
+      const frameDoc = printFrame.contentWindow?.document;
+      if (frameDoc) {
+        frameDoc.open();
+        frameDoc.write(html);
+        frameDoc.close();
+        setTimeout(() => {
+          printFrame.contentWindow?.focus();
+          printFrame.contentWindow?.print();
+          setTimeout(() => document.body.removeChild(printFrame), 2000);
+        }, 350);
+      }
+    }
+  };
+
+  const downloadCsv = () => {
+    if (!selectedAttempt) return;
+    const headers = ['Question ID', 'Response'];
+    const rows = Object.entries(selectedAttempt.answers).map(([qId, ans]) => {
+      const val = typeof ans === 'string' ? ans : JSON.stringify(ans);
+      return `"${qId.replace(/"/g, '""')}","${val.replace(/"/g, '""')}"`;
+    });
+    const csvContent = [headers.join(','), ...rows].join('\r\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    const safeName = (employee.name || 'employee').replace(/[^a-zA-Z0-9_-]/g, '_');
+    link.download = `Responses_${safeName}_Session_${selectedAttempt.sessionNumber}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    setTimeout(() => URL.revokeObjectURL(url), 1500);
   };
 
   return (
@@ -78,7 +200,11 @@ export default function AdminEmployeeDetailPage() {
               {employeeAttempts.map((attempt) => <option key={attempt.id} value={attempt.id}>Session {String(attempt.sessionNumber).padStart(2, '0')} · {attempt.assessmentTitle} · {attempt.status}</option>)}
             </select>
           </label>
-          <button onClick={downloadResult} className="btn-primary btn-sm gap-1.5" disabled={!selectedAttempt}><Download className="w-4 h-4" /> Download Result</button>
+          <div className="flex flex-wrap items-center gap-2">
+            <button onClick={downloadResult} className="btn-primary btn-sm gap-1.5" disabled={!selectedAttempt} title="Download complete report"><Download className="w-4 h-4" /> Download Report</button>
+            <button onClick={printResult} className="btn-secondary btn-sm gap-1.5" disabled={!selectedAttempt} title="Print or save as PDF"><Printer className="w-4 h-4" /> Print / PDF</button>
+            <button onClick={downloadCsv} className="btn-secondary btn-sm gap-1.5" disabled={!selectedAttempt} title="Export answers to CSV"><FileText className="w-4 h-4" /> Export CSV</button>
+          </div>
         </div>
 
         {selectedAttempt && <>
