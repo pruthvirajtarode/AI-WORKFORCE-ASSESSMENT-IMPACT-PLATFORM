@@ -202,6 +202,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const { data: authData, error: authError } = await supabase.auth.signInAnonymously();
       if (authError || !authData.user) {
+        if (authError?.message?.toLowerCase().includes('anonymous')) {
+          return {
+            error: 'Anonymous sign-ins are disabled in Supabase. In the Supabase Dashboard, go to Authentication → Providers → Anonymous and turn on "Allow anonymous sign-ins".',
+          };
+        }
         return { error: authError?.message ?? 'Could not create an assessment session.' };
       }
 
@@ -211,6 +216,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       });
       if (error) {
         await supabase.auth.signOut();
+        if (error.message?.includes('register_assessment_guest')) {
+          return {
+            error: 'Database migration required: run "supabase/migrations/202610260002_anonymous_assessment_registration.sql" in your Supabase SQL Editor.',
+          };
+        }
         return { error: error.message };
       }
 
