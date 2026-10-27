@@ -15,12 +15,11 @@ set search_path = ''
 as $$
 declare
   guest_user_id uuid := (select auth.uid());
-  resolved_department_id uuid;
+  resolved_department_id text;
   resolved_department_name text;
   resolved_department_code text;
   resolved_employee_id uuid;
   resolved_employee_code text;
-  resolved_department_text text;
 begin
   if guest_user_id is null
     or not coalesce((select (auth.jwt() ->> 'is_anonymous')::boolean), false) then
@@ -31,7 +30,7 @@ begin
     raise exception 'Name must be between 2 and 100 characters';
   end if;
 
-  select department.id, department.name, department.code
+  select department.id::text, department.name, department.code
     into resolved_department_id, resolved_department_name, resolved_department_code
   from public.departments as department
   where upper(department.code) = upper(trim(p_department_code))
@@ -43,7 +42,7 @@ begin
 
   select employee.id, employee.employee_id, employee.department_id::text,
          department.name, department.code
-    into resolved_employee_id, resolved_employee_code, resolved_department_text,
+    into resolved_employee_id, resolved_employee_code, resolved_department_id,
          resolved_department_name, resolved_department_code
   from public.profiles as profile
   join public.employees as employee on employee.id = profile.employee_id
@@ -70,12 +69,10 @@ begin
 
     insert into public.profiles (user_id, employee_id, role)
     values (guest_user_id, resolved_employee_id, 'employee');
-
-    resolved_department_text := resolved_department_id::text;
   end if;
 
   return query select resolved_employee_id, resolved_employee_code,
-    resolved_department_text, resolved_department_name, resolved_department_code;
+    resolved_department_id, resolved_department_name, resolved_department_code;
 end;
 $$;
 
